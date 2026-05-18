@@ -3,7 +3,7 @@ import http from 'http';
 import { io as ioc, Socket as ClientSocket } from 'socket.io-client';
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { SocketService } from '../../src/services/socket/socket.service';
+import { SocketService } from '../../src/services/socket/socket-service';
 import { envConfig } from '../../src/config/env';
 describe('Socket.IO Service Integration Tests', () => {
   let server: http.Server;
