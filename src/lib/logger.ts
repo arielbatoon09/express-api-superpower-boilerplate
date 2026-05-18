@@ -20,11 +20,11 @@ const transports: winston.transport[] = [
       envConfig.STAGE === STAGES.Prod
         ? combine(timestamp(), errors({ stack: true }), json())
         : combine(
-          timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-          colorize(),
-          errors({ stack: true }),
-          devFormat
-        ),
+            timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+            colorize(),
+            errors({ stack: true }),
+            devFormat
+          ),
   }),
 ];
 
