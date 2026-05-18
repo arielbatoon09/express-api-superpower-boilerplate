@@ -2,7 +2,7 @@ import { injectable, inject } from 'tsyringe';
 import type { Request, Response } from 'express';
 import { BaseController } from '@/controllers/base-controller';
 import { AsyncController } from '@/lib/decorators';
-import { SignupWithEmailService, VerifyEmailService, LoginWithEmailService } from '@/services/auth';
+import { SignupWithEmailService, VerifyEmailService, LoginWithEmailService, ResendEmailVerificationService } from '@/services/auth';
 import { setAuthCookies } from '@/utils/cookie';
 
 @injectable()
@@ -10,7 +10,8 @@ export class AuthController extends BaseController {
   constructor(
     @inject(SignupWithEmailService) private readonly signupService: SignupWithEmailService,
     @inject(VerifyEmailService) private readonly verifyEmailService: VerifyEmailService,
-    @inject(LoginWithEmailService) private readonly loginService: LoginWithEmailService
+    @inject(LoginWithEmailService) private readonly loginService: LoginWithEmailService,
+    @inject(ResendEmailVerificationService) private readonly resendEmailVerificationService: ResendEmailVerificationService
   ) {
     super();
   }
@@ -38,18 +39,38 @@ export class AuthController extends BaseController {
     const result = await this.loginService.execute({ email, password });
 
     if (result.code === 200 && result.data?.tokens) {
-      const { accessToken, refreshToken, expiresIn } = result.data.tokens;
+      const { accessToken, refreshToken, expiresIn, refreshExpiresIn } = result.data.tokens;
 
-      // Set the refresh token in an HTTP-only, secure cookie
-      setAuthCookies(res, { refreshToken });
+      // Detect if the client requests native token delivery instead of secure cookies
+      const useCookies = req.headers['x-use-cookies'] !== 'false';
 
-      // Return ONLY the accessToken and its duration to the client to store in-memory
-      result.data.tokens = {
-        accessToken,
-        expiresIn,
-      };
+      if (useCookies) {
+        // --- WEB CLIENTS: Secure HTTP-Only Cookies ---
+        setAuthCookies(res, { refreshToken });
+
+        result.data.tokens = {
+          accessToken,
+          expiresIn,
+        };
+      } else {
+        // --- NATIVE CLIENTS (Mobile/Desktop): Direct JSON Delivery ---
+        result.data.tokens = {
+          accessToken,
+          refreshToken,
+          expiresIn,
+          refreshExpiresIn,
+        };
+      }
     }
 
+    return this.send(res, result);
+  }
+
+  // Resend verification email controller
+  @AsyncController()
+  async resendEmailVerification(req: Request, res: Response) {
+    const { email } = req.body ?? {};
+    const result = await this.resendEmailVerificationService.execute({ email });
     return this.send(res, result);
   }
 }

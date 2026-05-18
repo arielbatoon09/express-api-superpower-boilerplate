@@ -7,6 +7,8 @@ import {
   VerifyEmailSuccessResponseSchema,
   loginWithEmailSchema,
   LoginSuccessResponseSchema,
+  resendEmailVerificationSchema,
+  ResendVerificationSuccessResponseSchema,
 } from '@/schemas/auth';
 import { OpenApiRouter } from '@/lib/openapi-router';
 
@@ -47,6 +49,18 @@ openApiRouter.post({
   response: LoginSuccessResponseSchema,
   errors: [400, 401, 500],
   handler: authController.loginWithEmail,
+});
+
+// Resend Verification Email
+openApiRouter.post({
+  path: '/v1/resend-email-verification',
+  summary: 'Resend email verification',
+  description: 'Resends email verification to the user.',
+  tags: ['Authentication'],
+  request: resendEmailVerificationSchema,
+  response: ResendVerificationSuccessResponseSchema,
+  errors: [400, 401, 500],
+  handler: authController.resendEmailVerification,
 });
 
 export default openApiRouter.router;

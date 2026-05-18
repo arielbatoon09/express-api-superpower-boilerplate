@@ -76,4 +76,13 @@ export class TokenRepository {
       data: { revokedAt: new Date() },
     });
   }
+
+  async cleanupInvalidTokensByUser(userId: string) {
+    return this.db.token.deleteMany({
+      where: {
+        userId,
+        OR: [{ expiresAt: { lt: new Date() } }, { revokedAt: { not: null } }, { consumedAt: { not: null } }],
+      },
+    });
+  }
 }
