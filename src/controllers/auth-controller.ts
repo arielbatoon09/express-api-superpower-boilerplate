@@ -1,8 +1,8 @@
-import { injectable, inject } from "tsyringe";
-import { Request, Response } from "express";
-import { BaseController } from "@/controllers/base-controller";
-import { AsyncController } from "@/lib/decorators";
-import { SignupWithEmailService } from "@/services/auth";
+import { injectable, inject } from 'tsyringe';
+import { Request, Response } from 'express';
+import { BaseController } from '@/controllers/base-controller';
+import { AsyncController } from '@/lib/decorators';
+import { SignupWithEmailService } from '@/services/auth';
 
 @injectable()
 export class AuthController extends BaseController {

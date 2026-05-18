@@ -38,7 +38,13 @@ export const sendSuccess = ({ res, message, data, statusCode = 200 }: SuccessRes
 /**
  * Sends a structured error API response, logs details / stack trace, and hides details in production.
  */
-export const sendError = ({ res, message, statusCode = 500, error, errors }: ErrorResponseOptions) => {
+export const sendError = ({
+  res,
+  message,
+  statusCode = 500,
+  error,
+  errors,
+}: ErrorResponseOptions) => {
   // Log full error details inside Winston daily logs
   logger.error(`${chalk.red(`Error [${statusCode}]`)}: ${message}`, {
     statusCode,

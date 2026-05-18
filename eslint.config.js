@@ -12,6 +12,9 @@ export default tseslint.config(
       ".env",
       "*.sql",
       "*.md",
+      "eslint.config.js",
+      "*.config.js",
+      "*.config.ts",
     ],
   },
   {

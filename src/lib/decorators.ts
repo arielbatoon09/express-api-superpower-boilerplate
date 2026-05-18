@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from 'express';
 
 /**
  * Method decorator to wrap asynchronous Express route handlers.
@@ -7,12 +7,12 @@ import { Request, Response, NextFunction } from "express";
  */
 export function AsyncController() {
   return function (
-    target: any,         // 'value' (the function) in standard, 'target' (prototype) in legacy
-    contextOrKey: any,   // 'context' object in standard, 'propertyKey' (string/symbol) in legacy
+    target: any, // 'value' (the function) in standard, 'target' (prototype) in legacy
+    contextOrKey: any, // 'context' object in standard, 'propertyKey' (string/symbol) in legacy
     descriptor?: PropertyDescriptor // undefined in standard, object in legacy
   ): any {
     // 1. Standard ES Decorators (TS 5.x+)
-    if (contextOrKey && typeof contextOrKey === "object" && contextOrKey.kind === "method") {
+    if (contextOrKey && typeof contextOrKey === 'object' && contextOrKey.kind === 'method') {
       const originalMethod = target;
       return async function (this: any, req: Request, res: Response, next: NextFunction) {
         try {
@@ -26,7 +26,12 @@ export function AsyncController() {
     // 2. Legacy / Experimental Decorators (TS <5.0 or experimentalDecorators: true)
     if (descriptor) {
       const originalMethod = descriptor.value;
-      descriptor.value = async function (this: any, req: Request, res: Response, next: NextFunction) {
+      descriptor.value = async function (
+        this: any,
+        req: Request,
+        res: Response,
+        next: NextFunction
+      ) {
         try {
           return await originalMethod.call(this, req, res, next);
         } catch (error) {

@@ -25,7 +25,7 @@ describe('Socket.IO Service Integration Tests', () => {
     socketService.init(server);
 
     // Listen on dynamic port 0 (operating system chooses any free port)
-    await new Promise<void>((resolve) => {
+    await new Promise<void>(resolve => {
       server.listen(0, () => {
         const address = server.address();
         port = typeof address === 'string' ? 8000 : address?.port || 8000;
@@ -53,7 +53,7 @@ describe('Socket.IO Service Integration Tests', () => {
         reject(new Error('Expected server to reject connection but it succeeded.'));
       });
 
-      client.on('connect_error', (error) => {
+      client.on('connect_error', error => {
         expect(error.message).toContain('Authentication failed');
         resolve();
       });
@@ -61,7 +61,7 @@ describe('Socket.IO Service Integration Tests', () => {
   });
 
   it('should authenticate client successfully with a valid JWT token', () => {
-    return new Promise<void>((resolve) => {
+    return new Promise<void>(resolve => {
       const client: ClientSocket = ioc(`http://localhost:${port}`, {
         transports: ['websocket'],
         auth: { token: testToken },
@@ -76,7 +76,7 @@ describe('Socket.IO Service Integration Tests', () => {
   });
 
   it('should join user to private room and receive private targeted notifications', () => {
-    return new Promise<void>((resolve) => {
+    return new Promise<void>(resolve => {
       const client: ClientSocket = ioc(`http://localhost:${port}/notifications`, {
         transports: ['websocket'],
         auth: { token: testToken },
@@ -92,7 +92,7 @@ describe('Socket.IO Service Integration Tests', () => {
         }, 100);
       });
 
-      client.on('new_alert', (payload) => {
+      client.on('new_alert', payload => {
         expect(payload.data.msg).toBe('You have a new message!');
         expect(payload.event).toBe('new_alert');
         client.disconnect();
@@ -102,7 +102,7 @@ describe('Socket.IO Service Integration Tests', () => {
   });
 
   it('should support dynamic rooms and broadcast messages within a Chat room', () => {
-    return new Promise<void>((resolve) => {
+    return new Promise<void>(resolve => {
       // Client 1 (User 123)
       const client1: ClientSocket = ioc(`http://localhost:${port}/chat`, {
         transports: ['websocket'],
@@ -110,7 +110,10 @@ describe('Socket.IO Service Integration Tests', () => {
       });
 
       // Client 2 (User 456)
-      const client2Token = jwt.sign({ id: 'user_456', email: 'user2@example.com' }, envConfig.JWT_SECRET);
+      const client2Token = jwt.sign(
+        { id: 'user_456', email: 'user2@example.com' },
+        envConfig.JWT_SECRET
+      );
       const client2: ClientSocket = ioc(`http://localhost:${port}/chat`, {
         transports: ['websocket'],
         auth: { token: client2Token },
@@ -138,11 +141,11 @@ describe('Socket.IO Service Integration Tests', () => {
       client2.on('connect', onConnect);
 
       // Client 2 listens for the message
-      client2.on('new_message', (payload) => {
+      client2.on('new_message', payload => {
         expect(payload.message).toBe('Hey there! Welcome to the premium group chat!');
         expect(payload.senderId).toBe('user_123');
         expect(payload.senderEmail).toBe('test@example.com');
-        
+
         client1.disconnect();
         client2.disconnect();
         resolve();

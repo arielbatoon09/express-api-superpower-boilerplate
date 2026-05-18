@@ -13,12 +13,12 @@ export class ChatNamespace extends BaseNamespace {
     socket.on('join_room', (roomId: string) => {
       socket.join(roomId);
       logger.info(`User [${userId}] joined chat room: ${roomId}`);
-      
+
       // Notify other members of the room
       socket.to(roomId).emit('user_joined', {
         userId,
         email: userEmail,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     });
 
@@ -26,12 +26,12 @@ export class ChatNamespace extends BaseNamespace {
     socket.on('leave_room', (roomId: string) => {
       socket.leave(roomId);
       logger.info(`User [${userId}] left chat room: ${roomId}`);
-      
+
       // Notify other members of the room
       socket.to(roomId).emit('user_left', {
         userId,
         email: userEmail,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
     });
 

@@ -1,7 +1,7 @@
-import { injectable } from "tsyringe";
-import nodemailer, { Transporter } from "nodemailer";
-import { envConfig } from "@/config/env";
-import { logger } from "@/lib/logger";
+import { injectable } from 'tsyringe';
+import nodemailer, { Transporter } from 'nodemailer';
+import { envConfig } from '@/config/env';
+import { logger } from '@/lib/logger';
 
 export type SendEmailParams = {
   to: string;
@@ -14,7 +14,7 @@ export class MailerService {
   private transporter: Transporter | null = null;
 
   constructor() {
-    logger.info("MailerService initialized");
+    logger.info('MailerService initialized');
   }
 
   /**
@@ -28,7 +28,7 @@ export class MailerService {
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD } = envConfig;
 
     if (!SMTP_HOST) {
-      throw new Error("SMTP_HOST must be configured in environment variables");
+      throw new Error('SMTP_HOST must be configured in environment variables');
     }
 
     const isSecure = SMTP_PORT === 465;
@@ -54,8 +54,8 @@ export class MailerService {
    * Sends a standardized email wrapped in production logging and try-catch safety.
    */
   public async send({ to, subject, html }: SendEmailParams): Promise<void> {
-    const fromName = envConfig.APP_NAME || "Express Boilerplate";
-    const fromEmail = envConfig.SMTP_FROM || "no-reply@example.com";
+    const fromName = envConfig.APP_NAME || 'Express Boilerplate';
+    const fromEmail = envConfig.SMTP_FROM || 'no-reply@example.com';
 
     try {
       logger.info(`Attempting to send email to: ${to} | Subject: "${subject}"`);
@@ -70,7 +70,7 @@ export class MailerService {
       logger.info(`Email successfully sent to: ${to}. MessageId: ${info.messageId}`);
     } catch (error: any) {
       logger.error(`Failed to send email to ${to}: ${error.message}`, { error });
-      throw new Error(`Email delivery failed: ${error.message}`);
+      throw new Error(`Email delivery failed: ${error.message}`, { cause: error });
     }
   }
 }

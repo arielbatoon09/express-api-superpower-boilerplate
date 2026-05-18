@@ -1,6 +1,6 @@
-import { NextFunction, Request, Response } from "express";
-import { verifyAccessToken, JwtPayload } from "@/lib/jwt";
-import { sendError } from "@/utils/apiResponse";
+import { NextFunction, Request, Response } from 'express';
+import { verifyAccessToken, JwtPayload } from '@/lib/jwt';
+import { sendError } from '@/utils/apiResponse';
 
 type AuthenticatedRequest = Request & { user?: JwtPayload };
 
@@ -17,12 +17,12 @@ export class AuthMiddleware {
     }
 
     if (!accessToken) {
-      return AuthMiddleware.handleUnauthorized(res, "Authentication required");
+      return AuthMiddleware.handleUnauthorized(res, 'Authentication required');
     }
 
     const payload = verifyAccessToken(accessToken);
     if (!payload) {
-      return AuthMiddleware.handleUnauthorized(res, "Invalid or expired token");
+      return AuthMiddleware.handleUnauthorized(res, 'Invalid or expired token');
     }
 
     authReq.user = payload;
@@ -32,8 +32,8 @@ export class AuthMiddleware {
   // Extract Bearer Token from Authorization Header
   private static extractBearerToken(header?: string): string | undefined {
     if (!header) return undefined;
-    const [scheme, token] = header.split(" ");
-    if (!scheme || scheme.toLowerCase() !== "bearer" || !token) return undefined;
+    const [scheme, token] = header.split(' ');
+    if (!scheme || scheme.toLowerCase() !== 'bearer' || !token) return undefined;
     return token.trim();
   }
 

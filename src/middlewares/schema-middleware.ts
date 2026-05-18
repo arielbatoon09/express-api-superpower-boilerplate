@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import { ZodTypeAny, ZodError } from "zod";
-import { sendError } from "@/utils/apiResponse";
+import { Request, Response, NextFunction } from 'express';
+import { ZodTypeAny, ZodError } from 'zod';
+import { sendError } from '@/utils/apiResponse';
 
 export class SchemaMiddleware {
   // Validate Schema
@@ -17,7 +17,7 @@ export class SchemaMiddleware {
         if (validated.body !== undefined) {
           req.body = validated.body;
         }
-        
+
         if (validated.query !== undefined) {
           // req.query is a read-only getter in Express 5, so we mutate its properties
           for (const key in req.query) {
@@ -44,13 +44,13 @@ export class SchemaMiddleware {
   // Handle Error based on Schema Validation
   private static handleError(res: Response, error: any, next: NextFunction) {
     if (error instanceof ZodError) {
-      const errorList = error.issues.map((issue) => {
-        const fullPath = issue.path.join(".");
+      const errorList = error.issues.map(issue => {
+        const fullPath = issue.path.join('.');
 
         // Strip the prefix for a cleaner API response (e.g. "email" instead of "body.email")
         const cleanPath = issue.path
-          .filter((p) => p !== "body" && p !== "query" && p !== "params")
-          .join(".");
+          .filter(p => p !== 'body' && p !== 'query' && p !== 'params')
+          .join('.');
 
         return {
           path: cleanPath || fullPath,
@@ -60,7 +60,7 @@ export class SchemaMiddleware {
 
       return sendError({
         res,
-        message: "Validation failed",
+        message: 'Validation failed',
         statusCode: 400,
         errors: errorList,
       });

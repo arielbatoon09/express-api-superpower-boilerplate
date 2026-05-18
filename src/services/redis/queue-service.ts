@@ -1,14 +1,14 @@
-import { injectable } from "tsyringe";
-import { Queue, Job, JobsOptions } from "bullmq";
-import { envConfig } from "@/config/env";
-import { logger } from "@/lib/logger";
+import { injectable } from 'tsyringe';
+import { Queue, Job, JobsOptions } from 'bullmq';
+import { envConfig } from '@/config/env';
+import { logger } from '@/lib/logger';
 
 @injectable()
 export class QueueService {
   private queues: Map<string, Queue> = new Map();
 
   constructor() {
-    logger.info("QueueService: Instantiated successfully");
+    logger.info('QueueService: Instantiated successfully');
   }
 
   /**
@@ -20,7 +20,7 @@ export class QueueService {
 
     if (!queue) {
       logger.info(`QueueService: Initializing new queue [${queueName}]`);
-      
+
       queue = new Queue(queueName, {
         connection: {
           url: envConfig.REDIS_URL,
@@ -29,8 +29,10 @@ export class QueueService {
         },
       });
 
-      queue.on("error", (error) => {
-        logger.error(`QueueService: Queue [${queueName}] encountered error: ${error.message}`, { error });
+      queue.on('error', error => {
+        logger.error(`QueueService: Queue [${queueName}] encountered error: ${error.message}`, {
+          error,
+        });
       });
 
       this.queues.set(queueName, queue);
@@ -56,7 +58,7 @@ export class QueueService {
         // Standard production-ready defaults (e.g. automatic retries, backoff)
         attempts: 3,
         backoff: {
-          type: "exponential",
+          type: 'exponential',
           delay: 1000,
         },
         removeOnComplete: true, // Keep Redis memory clean
@@ -64,10 +66,15 @@ export class QueueService {
         ...opts,
       });
 
-      logger.info(`QueueService: Job [${jobName}] appended successfully. Assigned JobId: ${job.id}`);
+      logger.info(
+        `QueueService: Job [${jobName}] appended successfully. Assigned JobId: ${job.id}`
+      );
       return job;
     } catch (error: any) {
-      logger.error(`QueueService: Failed to append job [${jobName}] to queue [${queueName}]: ${error.message}`, { error });
+      logger.error(
+        `QueueService: Failed to append job [${jobName}] to queue [${queueName}]: ${error.message}`,
+        { error }
+      );
       throw error;
     }
   }
@@ -76,7 +83,7 @@ export class QueueService {
    * Gracefully shuts down all active queue connections during server teardown.
    */
   public async closeAll(): Promise<void> {
-    logger.info("QueueService: Shutting down all active queue connections...");
+    logger.info('QueueService: Shutting down all active queue connections...');
     for (const [name, queue] of this.queues.entries()) {
       try {
         await queue.close();

@@ -1,9 +1,9 @@
-import { injectable, inject } from "tsyringe";
-import { PrismaClient, Token, TokenType } from "@prisma/client";
+import { injectable, inject } from 'tsyringe';
+import { PrismaClient, Token, TokenType } from '@prisma/client';
 
 @injectable()
 export class TokenRepository {
-  constructor(@inject("PrismaClient") private readonly db: PrismaClient) {};
+  constructor(@inject('PrismaClient') private readonly db: PrismaClient) {}
 
   async createEmailVerificationToken(params: { userId: string; token: string; expiresAt: Date }) {
     const { userId, token, expiresAt } = params;
@@ -59,7 +59,7 @@ export class TokenRepository {
         consumedAt: null,
         revokedAt: null,
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: 'desc' },
     });
   }
 

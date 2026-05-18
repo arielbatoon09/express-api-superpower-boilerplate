@@ -25,7 +25,7 @@ redis.on('ready', () => {
   logger.info('Redis: Client successfully initialized and ready to receive queries.');
 });
 
-redis.on('error', (error) => {
+redis.on('error', error => {
   logger.error('Redis: Client connection encountered an error:', error);
 });
 
