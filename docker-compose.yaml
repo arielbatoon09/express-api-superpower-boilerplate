@@ -1,0 +1,13 @@
+name: express-api-boilerplate
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '${APP_PORT}:8000'
+    environment:
+      - STAGE=${STAGE}
+      - DB_URL=${DB_URL}
+      - TEST_DB_URL=${TEST_DB_URL}
