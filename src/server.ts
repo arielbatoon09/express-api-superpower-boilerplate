@@ -1,8 +1,9 @@
 import http from 'http';
 import app from '@/app';
 import { envConfig } from '@/config/env';
-import { SocketService } from '@/services/socket/socket.service';
+import { SocketService } from '@/services/socket/socket-service';
 import { prisma } from '@/lib/prisma';
+import { redis } from '@/lib/redis';
 import { logger } from '@/lib/logger';
 import chalk from 'chalk';
 
@@ -19,6 +20,13 @@ const startServer = () => {
         logger.info('Database connected successfully.');
     }).catch((error) => {
         logger.error('CRITICAL: Database connection failed on startup:', error);
+    });
+
+    // Connect to Redis (Non-blocking startup check for serverful resilience)
+    redis.ping().then(() => {
+        logger.info('Redis connected successfully.');
+    }).catch((error) => {
+        logger.error('CRITICAL: Redis connection failed on startup:', error);
     });
 
     // 4. Listen on port using HTTP Server

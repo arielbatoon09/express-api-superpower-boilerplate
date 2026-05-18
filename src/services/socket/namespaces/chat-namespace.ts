@@ -1,5 +1,5 @@
 import { AuthenticatedSocket } from '@/services/socket/types';
-import { BaseNamespace } from '@/services/socket/namespaces/base.namespace';
+import { BaseNamespace } from '@/services/socket/namespaces/base-namespace';
 import { logger } from '@/lib/logger';
 
 export class ChatNamespace extends BaseNamespace {
@@ -12,7 +12,7 @@ export class ChatNamespace extends BaseNamespace {
     // Handle joining a chat room
     socket.on('join_room', (roomId: string) => {
       socket.join(roomId);
-      logger.info(`💬 User [${userId}] joined chat room: ${roomId}`);
+      logger.info(`User [${userId}] joined chat room: ${roomId}`);
       
       // Notify other members of the room
       socket.to(roomId).emit('user_joined', {
@@ -25,7 +25,7 @@ export class ChatNamespace extends BaseNamespace {
     // Handle leaving a chat room
     socket.on('leave_room', (roomId: string) => {
       socket.leave(roomId);
-      logger.info(`💬 User [${userId}] left chat room: ${roomId}`);
+      logger.info(`User [${userId}] left chat room: ${roomId}`);
       
       // Notify other members of the room
       socket.to(roomId).emit('user_left', {
@@ -38,7 +38,7 @@ export class ChatNamespace extends BaseNamespace {
     // Handle sending a chat message to a room
     socket.on('send_message', (data: { roomId: string; message: string }) => {
       const { roomId, message } = data;
-      logger.debug(`💬 User [${userId}] sent message in room [${roomId}]`);
+      logger.debug(`User [${userId}] sent message in room [${roomId}]`);
 
       // Emit to everyone in the room (including sender)
       this.ioNamespace.to(roomId).emit('new_message', {
@@ -59,7 +59,7 @@ export class ChatNamespace extends BaseNamespace {
     });
 
     socket.on('disconnect', () => {
-      logger.info(`💬 User [${userId}] disconnected from Chat namespace`);
+      logger.info(`User [${userId}] disconnected from Chat namespace`);
     });
   }
 }

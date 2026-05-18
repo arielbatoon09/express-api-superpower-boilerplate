@@ -14,6 +14,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(8000),
   STAGE: z.nativeEnum(STAGES).default(STAGES.Dev),
   DATABASE_URL: z.string().min(1, 'DATABASE_URL is required'),
+  REDIS_URL: z.preprocess((val) => (val === '' || val === undefined ? 'redis://127.0.0.1:6379' : val), z.string().url()),
   BACKEND_URL: z.string().url().default('http://localhost:8000'),
   GEMINI_API_KEY: z.string().optional(),
   JWT_SECRET: z.string().min(1, 'JWT_SECRET is required'),
@@ -30,9 +31,9 @@ const parseEnvironment = () => {
     return envSchema.parse({
       APP_NAME: process.env.APP_NAME,
       PORT: process.env.PORT,
-      STAGE:
-        process.env.STAGE || (process.env.NODE_ENV === 'production' ? STAGES.Prod : STAGES.Dev),
+      STAGE: process.env.STAGE || (process.env.NODE_ENV === 'production' ? STAGES.Prod : STAGES.Dev),
       DATABASE_URL: process.env.DATABASE_URL,
+      REDIS_URL: process.env.REDIS_URL,
       BACKEND_URL: process.env.BACKEND_URL,
       GEMINI_API_KEY: process.env.GEMINI_API_KEY,
       JWT_SECRET: process.env.JWT_SECRET,

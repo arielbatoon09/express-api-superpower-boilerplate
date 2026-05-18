@@ -1,5 +1,5 @@
 import { AuthenticatedSocket } from '@/services/socket/types';
-import { BaseNamespace } from '@/services/socket/namespaces/base.namespace';
+import { BaseNamespace } from '@/services/socket/namespaces/base-namespace';
 import { logger } from '@/lib/logger';
 
 export class NotificationNamespace extends BaseNamespace {
@@ -7,14 +7,14 @@ export class NotificationNamespace extends BaseNamespace {
 
   protected onConnection(socket: AuthenticatedSocket): void {
     const userId = socket.user?.id || 'anonymous';
-    logger.info(`🔔 User [${userId}] joined notifications namespace`);
+    logger.info(`User [${userId}] joined notifications namespace`);
 
     // Auto-join user into their private room for targeted events
     const privateRoom = `user_${userId}`;
     socket.join(privateRoom);
 
     socket.on('disconnect', () => {
-      logger.info(`🔔 User [${userId}] left notifications namespace`);
+      logger.info(`User [${userId}] left notifications namespace`);
     });
   }
 
@@ -28,7 +28,7 @@ export class NotificationNamespace extends BaseNamespace {
       data: payload,
       timestamp: new Date().toISOString(),
     });
-    logger.debug(`🔔 Sent notification event "${event}" to User [${userId}]`);
+    logger.debug(`Sent notification event "${event}" to User [${userId}]`);
   }
 
   /**
@@ -40,6 +40,6 @@ export class NotificationNamespace extends BaseNamespace {
       data: payload,
       timestamp: new Date().toISOString(),
     });
-    logger.debug(`🔔 Broadcasted notification event "${event}" to all users`);
+    logger.debug(`Broadcasted notification event "${event}" to all users`);
   }
 }

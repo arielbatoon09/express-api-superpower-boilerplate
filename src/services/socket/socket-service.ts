@@ -7,8 +7,8 @@ import { logger } from '@/lib/logger';
 import { AuthenticatedSocket, DecodedUser } from './types';
 
 // Namespaces
-import { NotificationNamespace } from './namespaces/notification.namespace';
-import { ChatNamespace } from './namespaces/chat.namespace';
+import { NotificationNamespace } from '@/services/socket/namespaces/notification-namespace';
+import { ChatNamespace } from '@/services/socket/namespaces/chat-namespace';
 
 export class SocketService {
   private static instance: SocketService;
@@ -32,7 +32,7 @@ export class SocketService {
    */
   public init(server: http.Server): void {
     if (this.io) {
-      logger.warn('⚠️ WebSocket server has already been initialized.');
+      logger.warn('WebSocket server has already been initialized.');
       return;
     }
 
@@ -57,7 +57,7 @@ export class SocketService {
    */
   public getIO(): SocketIOServer {
     if (!this.io) {
-      throw new Error('❌ SocketService has not been initialized. Call init(server) first.');
+      throw new Error('SocketService has not been initialized. Call init(server) first.');
     }
     return this.io;
   }
@@ -91,7 +91,7 @@ export class SocketService {
         }
 
         if (!token) {
-          logger.warn(`🔌 Connection from socket [${socket.id}] rejected: No Auth Token provided.`);
+          logger.warn(`Connection from socket [${socket.id}] rejected: No Auth Token provided.`);
           return next(new Error('Authentication failed: No token provided'));
         }
 
@@ -101,7 +101,7 @@ export class SocketService {
 
         next();
       } catch (err) {
-        logger.error(`🔌 Auth error for socket [${socket.id}]:`, err);
+        logger.error(`Auth error for socket [${socket.id}]:`, err);
         next(new Error('Authentication failed: Invalid token'));
       }
     };
