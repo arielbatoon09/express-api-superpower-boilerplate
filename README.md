@@ -1,181 +1,102 @@
 # ⚡ Express API Superpower Boilerplate
 
-A production-grade, highly-opinionated, and modular Express boilerplate engineered with **TypeScript**, **Clean Architecture**, and automated **Dependency Injection (tsyringe)**. Designed for maximum developer velocity, robust type-safety, and seamless testing.
+A production-grade, enterprise-ready Express boilerplate engineered with **TypeScript**, **Clean Architecture**, and automated **Dependency Injection**. This repository is designed to serve as a rock-solid foundation for high-performance microservices, providing out-of-the-box support for background processing, caching, real-time events, and zero-downtime resilience.
 
 ---
 
-## 🚀 Key Features
+## 🏛️ Architectural Principles
 
-* 🏛️ **Clean Architecture**: Strictly separated layers (`Routes ➔ Controllers ➔ Services ➔ Repositories`) for maximum modularity and maintainability.
-* 💉 **Automated Dependency Injection**: Powered by `tsyringe` and configured to work seamlessly with fast bundlers/runners like `tsx`.
-* 🛡️ **Centralized API Responses**: Centralized response utility (`sendSuccess` and `sendError`) coupled with environmental safety (hides stack traces in production) and Winston logging.
-* 📦 **Robust Tech Stack**:
-  * **Database**: Prisma ORM with PostgreSQL.
-  * **Caching & Key-Value**: Redis (`ioredis`).
-  * **Realtime**: WebSockets (`socket.io` via an encapsulated singleton service).
-  * **Validation**: Zod schema validation middleware.
-  * **Security**: JWT-based session/request authorization (`jsonwebtoken`).
-* 🏷️ **Modern Decorators**: Native ES Decorator and Legacy TS Decorator compatible `@AsyncController()` error-handler to automatically catch async route rejections.
-* 🧩 **Extensible Base Controller**: Automatic method binding (never write `.bind(this)` or arrow wrappers in routes) and semantic helpers (`this.send`, `this.ok`, `this.created`, `this.clientError`).
-* 🧪 **Vitest Ready**: Pre-configured Vitest environment optimized for lightning-fast testing with module mocking capabilities.
+This boilerplate enforces strict software engineering standards to guarantee developer velocity, code clarity, and testability as the project scales.
 
----
+### Clean Architecture Layers
+Code is structured inside four distinct, unidirectional layers:
+* **Routes (Composition Root)**: The entry point where URLs are mapped to controller methods, and where Zod request validations are applied as middleware.
+* **Controllers (Presentation Layer)**: Thin classes responsible *only* for resolving request query/param/body parameters, invoking the correct service orchestrator, and returning standardized API responses.
+* **Services (Business Logic Layer)**: The core "brains" of the application. Business workflows are designed as class-based orchestrators. The public interface accepts inputs, while individual logical steps are encapsulated in private helper methods.
+* **Repositories (Data Access Layer)**: A layer wrapping database models (Prisma) to decouple business services from database-specific query structures.
 
-## 📂 Project Structure
-
-```
-src/
-├── config/             # Environment variables and system configs
-├── constants/          # Application-wide constants and HTTP states
-├── controllers/        # Express entry points (handles req/res and validation)
-│   ├── base-controller.ts  # Class auto-binder and HTTP helper shortcuts
-│   └── auth-controller.ts  # Auth route handler
-├── lib/                # Database, Redis, and logger initializations
-│   ├── container.ts    # Central tsyringe DI container setup
-│   ├── decorators.ts   # Error-handling decorators (@AsyncController)
-│   └── prisma.ts       # Prisma Client wrapper
-├── middlewares/        # Express request middleware filters (Auth, RBAC, Validation)
-├── repositories/       # Data-access abstraction layer (Database queries)
-├── routes/             # Express routes (Composition root / DI wiring)
-├── schemas/            # Zod validation schemas
-├── services/           # Business logic layer (The brains of the application)
-├── utils/              # Centralized response and helper formatters
-├── app.ts              # Express application assembly
-└── server.ts           # Server runner and HTTP entrypoint
-```
+### SOLID Principles Enforced
+* **Single Responsibility**: Classes have one job. Services handle business flows; repositories handle SQL queries; controllers handle HTTP request routing.
+* **Open/Closed**: Features are easily extended. For instance, you can swap email delivery mechanisms by implementing a different email service, without altering the registration service.
+* **Dependency Inversion**: High-level modules depend on constructor-injected abstractions rather than hardcoded global singletons.
 
 ---
 
-## 🛠️ Getting Started
+## 📦 Core Technology Stack
 
-### 1. Prerequisites
-Ensure you have Node.js (v18+) and your database/Redis servers ready.
+Every technology in this stack has been selected for maximum type-safety, execution speed, and horizontal scalability:
 
-### 2. Installation
-```bash
-npm install
-```
+### Database & Caching
+* **PostgreSQL**: The primary relational database for ACID-compliant structured storage.
+* **Prisma ORM**: A modern, type-safe database client providing auto-generated schemas, seamless migration tooling, and native TypeScript types.
+* **Redis (`ioredis`)**: In-memory data store utilized for lightning-fast key-value caching, session management, and task queuing operations.
 
-### 3. Environment Setup
-Create a `.env` file in the root directory and specify the following details:
-```env
-PORT=3000
-STAGE=dev
-APP_NAME="Express Superpower"
-BACKEND_URL="http://localhost:3000"
-DATABASE_URL="postgresql://user:password@localhost:5432/dbname"
-REDIS_URL="redis://localhost:6379"
-JWT_SECRET="your-ultra-secure-jwt-secret"
-```
+### Asynchronous Tasks & Background Workers
+* **BullMQ**: A highly robust, Redis-backed queue system. Heavy operations (such as sending transactional emails, PDF generation, or third-party webhooks) are enqueued as background jobs rather than executed inside HTTP request loops, allowing endpoints to respond instantly.
+* **Background Workers**: Dedicated background consumers that listen to Redis queues, handle retries, and execute jobs independently of the Express server thread.
 
-### 4. Running Locally
-Start the development server with live watch mode (powered by `tsx`):
-```bash
-npm run dev
-```
+### Dependency Injection (DI)
+* **Tsyringe**: A lightweight, automated Dependency Injection container by Microsoft. It manages class instances dynamically, allowing you to inject repositories, services, and utilities through constructors. It is explicitly configured with custom decorators to maintain metadata resolution when run under fast, non-decorator native runtimes.
 
-### 5. Production Build
-Compile to highly-optimized production-ready bundles:
-```bash
-npm run build
-npm start
-```
+### Real-Time & Security
+* **Socket.io**: Real-time bidirectional event engine encapsulated inside a singleton lifecycle service, allowing immediate socket communication across any architectural layer.
+* **Argon2**: The industry-standard, secure password-hashing algorithm. Highly resistant to brute-force and GPU-based side-channel cracking.
+* **JSON Web Tokens (`jsonwebtoken`)**: Signed token arrays utilized for stateless, high-speed user authorization and session management.
+* **Zod**: Declarative, schema-driven validation middleware. Validates incoming query parameters, route segments, and payloads, ensuring only 100% compliant data reaches your controllers.
+
+### Interactive API Documentation
+* **OpenAPI 3.0 & Swagger UI**: Built-in, zero-duplication interactive API dashboard available at `/docs`.
+* **Zod-to-OpenAPI**: This boilerplate utilizes a custom "Superpower" router (`OpenApiRouter`) that combines Zod validation, Swagger generation, and Express routing into a single method call. Your Zod schemas act as the single source of truth for both payload validation and documentation generation, guaranteeing that your API specs are 100% strictly typed and always accurate.
+
+### Diagnostics & Monitoring
+* **Winston Logger**: Centralized, multi-channel production logger. Configured with automated daily file rotations, clean console colors, and secure filters to capture execution traces and trace system failures without exposing sensitive data.
 
 ---
 
-## 🧪 Testing with Vitest
+## 🛡️ Production Resilience & High Availability
 
-Tests are powered by **Vitest** for lightning-fast execution and native TypeScript support.
+This boilerplate is hardened out-of-the-box to run inside clustered, containerized production environments like Docker or Kubernetes:
 
-To run tests:
-```bash
-npm run test
-```
+### 1. Zero-Downtime Graceful Shutdowns
+When a cloud cluster scales down or redeploys, it broadcasts termination signals (`SIGTERM`/`SIGINT`).
+This boilerplate intercepts these signals and runs a graceful shutdown sequence:
+* Closes the HTTP server pool to stop accepting new requests, allowing active connections to complete.
+* Disconnects the Prisma database client safely to prevent orphaned transactions.
+* Quits standard Redis cache connections cleanly.
+* Gracefully closes all BullMQ workers and queue pipelines, ensuring active background jobs are completed or safely re-queued rather than corrupted.
 
-### Mocking Services and Database Calls
-Since the architecture decouples your business logic into the `Services` layer, you can easily mock database modules like Prisma globally without writing heavy integration pipelines:
+### 2. Redis OOM (Out-of-Memory) Protection
+Unmanaged queues can crash Redis by filling RAM with old job history. Our queue system is pre-configured with memory retention limits:
+* **Auto-Cleanup**: Successful jobs are immediately removed from Redis.
+* **Cap Limits**: Failed jobs are capped to prevent infinite history bloat.
 
-```typescript
-import { vi, describe, it, expect } from "vitest";
-import { SignupWithEmailService } from "./signup-with-email";
-import { prisma } from "@/lib/prisma";
+### 3. Exponential Backoff & Retries
+To handle transient network drops, background jobs are automatically configured to retry up to 3 times with exponential delay gaps, preventing system overload.
 
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
-    user: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-    },
-  },
-}));
-
-describe("SignupWithEmailService", () => {
-  it("should block duplicate signups", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({ id: "1", email: "test@example.com" } as any);
-
-    const service = new SignupWithEmailService();
-    const result = await service.execute({ email: "test@example.com", password: "Password123" });
-
-    expect(result.code).toBe(400);
-    expect(result.message).toBe("Email already taken");
-  });
-});
-```
+### 4. Express 5 Compatibility
+Engineered on Express v5, utilizing safe `Object.assign` mapping strategies to validation schemas, bypassing the read-only Express 5 query/param getters, and eliminating manual router `try/catch` wrappers.
 
 ---
 
-## 🏛️ Dependency Injection Guide
+## 📂 Project Directory Structure
 
-To add a new feature cleanly into the codebase using `tsyringe`:
+* `src/config/`: System configuration schemas and environment variable validations.
+* `src/controllers/`: Express request handlers, extending `BaseController` for dynamic context auto-binding.
+* `src/lib/`: Database connectors, logging routines, and the central DI container registry.
+* `src/middlewares/`: Express filter middlewares (Authentication, RBAC, Validation).
+* `src/repositories/`: Database query abstraction files.
+* `src/routes/`: Route mappings and URL composition roots.
+* `src/schemas/`: Declarative Zod validation rules.
+* `src/services/`: Isolated business logic services, structured as facade orchestrators.
+* `src/workers/`: Background queue consumer daemons.
+* `src/utils/`: Standardized JSON API responders and template compilers.
 
-### 1. Mark your Service as Injectable
-```typescript
-import { injectable } from "tsyringe";
+---
 
-@injectable()
-export class OrderService {
-  async processOrder(orderId: string) {
-    return { success: true };
-  }
-}
-```
+## 🧪 Testing Architecture
 
-### 2. Inject it into your Controller
-Use the `@inject()` decorator to map parameters correctly so that fast builders like `tsx` (which strips design metadata at runtime) can resolve types reliably:
-```typescript
-import { injectable, inject } from "tsyringe";
-import { BaseController } from "./base-controller";
-import { OrderService } from "@/services/order-service";
-
-@injectable()
-export class OrderController extends BaseController {
-  constructor(
-    @inject(OrderService) private readonly orderService: OrderService
-  ) {
-    super();
-  }
-
-  @AsyncController()
-  async purchase(req: Request, res: Response) {
-    const result = await this.orderService.processOrder(req.body.id);
-    return this.send(res, { code: 200, status: "success", message: "Ordered!", data: result });
-  }
-}
-```
-
-### 3. Resolve the Controller in your Routes
-```typescript
-import { Router } from "express";
-import { container } from "@/lib/container";
-import { OrderController } from "@/controllers/order-controller";
-
-const router = Router();
-const orderController = container.resolve(OrderController);
-
-router.post("/order", orderController.purchase);
-
-export default router;
-```
+* **Vitest Ready**: Lightning-fast, ESM-native testing environment.
+* **Mock-Friendly**: Thanks to constructor Dependency Injection, you can unit-test any service, repository, or controller by simply passing stubbed mock parameters into the constructor, requiring zero complex mocking libraries or database connectivity.
 
 ---
 

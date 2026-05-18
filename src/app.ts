@@ -5,6 +5,7 @@ import { envConfig } from "@/config/env";
 import { requestLogger, errorLogger } from "@/lib/logger";
 import { sendSuccess, sendError } from "@/utils/apiResponse";
 import apiRouter from "@/routes";
+import { swaggerUi, generateOpenApiDocument } from "@/lib/openapi";
 
 const app = express();
 
@@ -24,6 +25,10 @@ app.use(cookieParser());
 
 // --- API Routing ---
 app.use("/api", apiRouter);
+
+// --- Interactive Swagger API Explorer ---
+// We dynamically generate the schema document after apiRouter is imported
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(generateOpenApiDocument()));
 
 // --- Simple Health Check ---
 app.get("/", (req: Request, res: Response) => {
