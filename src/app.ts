@@ -1,9 +1,10 @@
-import express, { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
-import cookieParser from 'cookie-parser';
-import { envConfig } from '@/config/env';
-import { requestLogger, errorLogger } from '@/lib/logger';
-import { sendSuccess, sendError } from '@/utils/apiResponse';
+import express, { Request, Response, NextFunction } from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import { envConfig } from "@/config/env";
+import { requestLogger, errorLogger } from "@/lib/logger";
+import { sendSuccess, sendError } from "@/utils/apiResponse";
+import apiRouter from "@/routes";
 
 const app = express();
 
@@ -21,8 +22,11 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// --- API Routing ---
+app.use("/api", apiRouter);
+
 // --- Simple Health Check ---
-app.get('/', (req: Request, res: Response) => {
+app.get("/", (req: Request, res: Response) => {
   sendSuccess({
     res,
     message: `${envConfig.APP_NAME} instance is healthy`,
@@ -51,7 +55,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 
   sendError({
     res,
-    message: err.message || 'Internal Server Error',
+    message: err.message || "Internal Server Error",
     statusCode,
     error: err,
   });

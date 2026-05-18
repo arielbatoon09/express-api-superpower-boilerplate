@@ -1,0 +1,1 @@
+export { signupWithEmailSchema, type SignupWithEmailInput } from "@/schemas/auth/signup-with-email-schema";
