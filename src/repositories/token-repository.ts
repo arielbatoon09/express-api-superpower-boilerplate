@@ -85,4 +85,39 @@ export class TokenRepository {
       },
     });
   }
+
+  async createPasswordResetToken(params: { userId: string; token: string; expiresAt: Date }) {
+    const { userId, token, expiresAt } = params;
+    return this.db.token.create({
+      data: {
+        userId,
+        token,
+        expiresAt,
+        type: TokenType.PASSWORD_RESET,
+      },
+    });
+  }
+
+  async findActivePasswordResetToken(token: string): Promise<Token | null> {
+    return this.db.token.findFirst({
+      where: {
+        token,
+        type: TokenType.PASSWORD_RESET,
+        consumedAt: null,
+        revokedAt: null,
+      },
+    });
+  }
+
+  async findLatestPasswordResetTokenByUser(userId: string): Promise<Token | null> {
+    return this.db.token.findFirst({
+      where: {
+        userId,
+        type: TokenType.PASSWORD_RESET,
+        consumedAt: null,
+        revokedAt: null,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 }

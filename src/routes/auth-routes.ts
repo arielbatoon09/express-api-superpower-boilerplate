@@ -9,7 +9,14 @@ import {
   LoginSuccessResponseSchema,
   resendEmailVerificationSchema,
   ResendVerificationSuccessResponseSchema,
+  forgotPasswordSchema,
+  ForgotPasswordSuccessResponseSchema,
+  resetPasswordSchema,
+  ResetPasswordSuccessResponseSchema,
+  changePasswordSchema,
+  ChangePasswordSuccessResponseSchema,
 } from '@/schemas/auth';
+import { AuthMiddleware } from '@/middlewares';
 import { OpenApiRouter } from '@/lib/openapi-router';
 
 const openApiRouter = new OpenApiRouter('/api/auth');
@@ -61,6 +68,43 @@ openApiRouter.post({
   response: ResendVerificationSuccessResponseSchema,
   errors: [400, 401, 500],
   handler: authController.resendEmailVerification,
+});
+
+// Forgot Password
+openApiRouter.post({
+  path: '/v1/forgot-password',
+  summary: 'Forgot Password',
+  description: 'Generates a secure password reset token and dispatches an instruction email to the user.',
+  tags: ['Authentication'],
+  request: forgotPasswordSchema,
+  response: ForgotPasswordSuccessResponseSchema,
+  errors: [400, 500],
+  handler: authController.forgotPassword,
+});
+
+// Reset Password
+openApiRouter.post({
+  path: '/v1/reset-password',
+  summary: 'Reset Password',
+  description: 'Resets the user password using a valid, unexpired PASSWORD_RESET token.',
+  tags: ['Authentication'],
+  request: resetPasswordSchema,
+  response: ResetPasswordSuccessResponseSchema,
+  errors: [400, 404, 410, 500],
+  handler: authController.resetPassword,
+});
+
+// Change Password
+openApiRouter.post({
+  path: '/v1/change-password',
+  summary: 'Change Password',
+  description: 'Allows logged-in users to securely change their password.',
+  tags: ['Authentication'],
+  request: changePasswordSchema,
+  response: ChangePasswordSuccessResponseSchema,
+  errors: [400, 401, 500],
+  middlewares: [AuthMiddleware.execute],
+  handler: authController.changePassword,
 });
 
 export default openApiRouter.router;

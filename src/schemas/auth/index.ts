@@ -6,3 +6,6 @@ export {
   ResendVerificationSuccessResponseSchema,
   type ResendEmailVerificationInput,
 } from '@/schemas/auth/resend-email-verification-schema';
+export { forgotPasswordSchema, ForgotPasswordSuccessResponseSchema, type ForgotPasswordInput } from '@/schemas/auth/forgot-password-schema';
+export { resetPasswordSchema, ResetPasswordSuccessResponseSchema, type ResetPasswordInput } from '@/schemas/auth/reset-password-schema';
+export { changePasswordSchema, ChangePasswordSuccessResponseSchema, type ChangePasswordInput } from '@/schemas/auth/change-password-schema';

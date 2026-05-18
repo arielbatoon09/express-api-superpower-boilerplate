@@ -8,13 +8,8 @@ export class AuthMiddleware {
   public static execute(req: Request, res: Response, next: NextFunction) {
     const authReq = req as AuthenticatedRequest;
 
-    // 1. Try to get token from Authorization Header
-    let accessToken = AuthMiddleware.extractBearerToken(req.headers.authorization);
-
-    // 2. Fallback to Cookies (for Web applications)
-    if (!accessToken && req.cookies) {
-      accessToken = req.cookies.accessToken;
-    }
+    // 1. Get token from Authorization Header
+    const accessToken = AuthMiddleware.extractBearerToken(req.headers.authorization);
 
     if (!accessToken) {
       return AuthMiddleware.handleUnauthorized(res, 'Authentication required');

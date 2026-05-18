@@ -44,4 +44,18 @@ export class UserRepository {
       select: { id: true, email: true, emailVerifiedAt: true },
     });
   }
+
+  async findByIdWithPassword(id: string) {
+    return await this.db.user.findFirst({
+      where: { id },
+    });
+  }
+
+  async updatePassword(userId: string, passwordHash: string) {
+    return await this.db.user.update({
+      where: { id: userId },
+      data: { password: passwordHash },
+      select: { id: true, email: true },
+    });
+  }
 }

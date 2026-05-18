@@ -19,7 +19,7 @@ export function initMailWorker() {
     async (job: Job) => {
       logger.info(`Worker: Started processing job [${job.name}] with ID: ${job.id}`);
 
-      if (job.name === 'send-verification-email') {
+      if (job.name === 'send-verification-email' || job.name === 'send-reset-password-email') {
         const { to, subject, html } = job.data;
 
         // Execute mail sending using our production MailerService
