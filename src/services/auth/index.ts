@@ -5,3 +5,5 @@ export { ResendEmailVerificationService } from '@/services/auth/resend-email-ver
 export { ForgotPasswordService } from '@/services/auth/forgot-password-service';
 export { ResetPasswordService } from '@/services/auth/reset-password-service';
 export { ChangePasswordService } from '@/services/auth/change-password-service';
+export { RefreshTokenService } from '@/services/auth/refresh-token-service';
+export { LogoutService } from '@/services/auth/logout-service';

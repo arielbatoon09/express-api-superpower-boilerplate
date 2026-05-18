@@ -9,3 +9,5 @@ export {
 export { forgotPasswordSchema, ForgotPasswordSuccessResponseSchema, type ForgotPasswordInput } from '@/schemas/auth/forgot-password-schema';
 export { resetPasswordSchema, ResetPasswordSuccessResponseSchema, type ResetPasswordInput } from '@/schemas/auth/reset-password-schema';
 export { changePasswordSchema, ChangePasswordSuccessResponseSchema, type ChangePasswordInput } from '@/schemas/auth/change-password-schema';
+export { refreshTokenSchema, RefreshTokenSuccessResponseSchema, type RefreshTokenInput } from '@/schemas/auth/refresh-token-schema';
+export { logoutSchema, LogoutSuccessResponseSchema, type LogoutInput } from '@/schemas/auth/logout-schema';

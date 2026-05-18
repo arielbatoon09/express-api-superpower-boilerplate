@@ -10,8 +10,10 @@ import {
   ForgotPasswordService,
   ResetPasswordService,
   ChangePasswordService,
+  RefreshTokenService,
+  LogoutService,
 } from '@/services/auth';
-import { setAuthCookies } from '@/utils/cookie';
+import { setAuthCookies, clearAuthCookies } from '@/utils/cookie';
 
 @injectable()
 export class AuthController extends BaseController {
@@ -22,7 +24,9 @@ export class AuthController extends BaseController {
     @inject(ResendEmailVerificationService) private readonly resendEmailVerificationService: ResendEmailVerificationService,
     @inject(ForgotPasswordService) private readonly forgotPasswordService: ForgotPasswordService,
     @inject(ResetPasswordService) private readonly resetPasswordService: ResetPasswordService,
-    @inject(ChangePasswordService) private readonly changePasswordService: ChangePasswordService
+    @inject(ChangePasswordService) private readonly changePasswordService: ChangePasswordService,
+    @inject(RefreshTokenService) private readonly refreshTokenService: RefreshTokenService,
+    @inject(LogoutService) private readonly logoutService: LogoutService
   ) {
     super();
   }
@@ -107,6 +111,51 @@ export class AuthController extends BaseController {
     const { currentPassword, newPassword } = req.body ?? {};
     const userId = (req as any).user?.sub;
     const result = await this.changePasswordService.execute({ userId, currentPassword, newPassword });
+    return this.send(res, result);
+  }
+
+  // Refresh token controller
+  @AsyncController()
+  async refreshToken(req: Request, res: Response) {
+    const useCookies = req.headers['x-use-cookies'] !== 'false';
+    const refreshToken = useCookies ? req.cookies?.refreshToken : req.body?.refreshToken;
+
+    const result = await this.refreshTokenService.execute({ refreshToken });
+
+    if (result.code === 200 && result.data?.tokens) {
+      const { accessToken, refreshToken: newRefreshToken, expiresIn, refreshExpiresIn } = result.data.tokens;
+
+      if (useCookies) {
+        setAuthCookies(res, { refreshToken: newRefreshToken });
+        result.data.tokens = {
+          accessToken,
+          expiresIn,
+        };
+      } else {
+        result.data.tokens = {
+          accessToken,
+          refreshToken: newRefreshToken,
+          expiresIn,
+          refreshExpiresIn,
+        };
+      }
+    }
+
+    return this.send(res, result);
+  }
+
+  // Logout controller
+  @AsyncController()
+  async logout(req: Request, res: Response) {
+    const useCookies = req.headers['x-use-cookies'] !== 'false';
+    const refreshToken = useCookies ? req.cookies?.refreshToken : req.body?.refreshToken;
+
+    const result = await this.logoutService.execute({ refreshToken });
+
+    if (useCookies) {
+      clearAuthCookies(res);
+    }
+
     return this.send(res, result);
   }
 }

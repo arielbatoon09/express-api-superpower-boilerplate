@@ -15,6 +15,10 @@ import {
   ResetPasswordSuccessResponseSchema,
   changePasswordSchema,
   ChangePasswordSuccessResponseSchema,
+  refreshTokenSchema,
+  RefreshTokenSuccessResponseSchema,
+  logoutSchema,
+  LogoutSuccessResponseSchema,
 } from '@/schemas/auth';
 import { AuthMiddleware } from '@/middlewares';
 import { OpenApiRouter } from '@/lib/openapi-router';
@@ -105,6 +109,30 @@ openApiRouter.post({
   errors: [400, 401, 500],
   middlewares: [AuthMiddleware.execute],
   handler: authController.changePassword,
+});
+
+// Refresh Token
+openApiRouter.post({
+  path: '/v1/refresh-token',
+  summary: 'Refresh Token',
+  description: 'Refreshes the user access token and provides a rotated refresh token.',
+  tags: ['Authentication'],
+  request: refreshTokenSchema,
+  response: RefreshTokenSuccessResponseSchema,
+  errors: [400, 401, 404, 500],
+  handler: authController.refreshToken,
+});
+
+// Logout
+openApiRouter.post({
+  path: '/v1/logout',
+  summary: 'Logout',
+  description: 'Invalidates the refresh token and clears all secure cookies.',
+  tags: ['Authentication'],
+  request: logoutSchema,
+  response: LogoutSuccessResponseSchema,
+  errors: [500],
+  handler: authController.logout,
 });
 
 export default openApiRouter.router;
