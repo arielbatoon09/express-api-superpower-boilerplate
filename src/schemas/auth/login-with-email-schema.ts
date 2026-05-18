@@ -23,8 +23,9 @@ export const LoginSuccessResponseSchema = z.object({
     }),
     tokens: z.object({
       accessToken: z.string().openapi({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }),
-      refreshToken: z.string().openapi({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }),
+      refreshToken: z.string().optional().openapi({ example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }),
       expiresIn: z.string().openapi({ example: '15m' }),
+      refreshExpiresIn: z.string().optional().openapi({ example: '7d' }),
     }),
   }),
 });
