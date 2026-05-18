@@ -3,15 +3,8 @@ import '@/lib/openapi';
 
 export const signupWithEmailSchema = z.object({
   body: z.object({
-    name: z
-      .string({ message: 'Name is required' })
-      .min(2, 'Name must be at least 2 characters')
-      .optional()
-      .openapi({ example: 'John Doe' }),
-    email: z
-      .string({ message: 'Email is required' })
-      .email('Invalid email format')
-      .openapi({ example: 'john@example.com' }),
+    name: z.string({ message: 'Name is required' }).min(2, 'Name must be at least 2 characters').optional().openapi({ example: 'John Doe' }),
+    email: z.string({ message: 'Email is required' }).email('Invalid email format').openapi({ example: 'john@example.com' }),
     password: z
       .string({ message: 'Password is required' })
       .min(8, 'Password must be at least 8 characters')

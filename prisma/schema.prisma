@@ -37,7 +37,6 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@index([id, email, role, emailVerifiedAt])
   @@map("tbl_users")
 }
 
@@ -60,6 +59,7 @@ model OAuthAccount {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([provider, providerAccountId])
+  @@index([userId])
   @@map("tbl_accounts")
 }
 

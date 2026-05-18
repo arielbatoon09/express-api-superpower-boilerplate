@@ -24,11 +24,7 @@ const transports: winston.transport[] = [
 ];
 
 // 2. Production & Development file rotation logging
-if (
-  envConfig.STAGE === STAGES.Prod ||
-  process.env.NODE_ENV === 'production' ||
-  process.env.NODE_ENV === 'development'
-) {
+if (envConfig.STAGE === STAGES.Prod || process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'development') {
   transports.push(
     new DailyRotateFile({
       filename: 'logs/error-%DATE%.log',

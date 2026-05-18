@@ -5,6 +5,8 @@ import {
   SignupSuccessResponseSchema,
   verifyEmailSchema,
   VerifyEmailSuccessResponseSchema,
+  loginWithEmailSchema,
+  LoginSuccessResponseSchema,
 } from '@/schemas/auth';
 import { OpenApiRouter } from '@/lib/openapi-router';
 
@@ -15,8 +17,7 @@ const authController = container.resolve(AuthController);
 openApiRouter.post({
   path: '/v1/signup',
   summary: 'Signup a new user with Email',
-  description:
-    'Validates request payloads, hashes credentials securely, persists the user profile, and queues verification emails asynchronously.',
+  description: 'Validates request payloads, hashes credentials securely, persists the user profile, and queues verification emails asynchronously.',
   tags: ['Authentication'],
   request: signupWithEmailSchema,
   response: SignupSuccessResponseSchema,
@@ -34,6 +35,18 @@ openApiRouter.get({
   response: VerifyEmailSuccessResponseSchema,
   errors: [400, 401, 500],
   handler: authController.verifyEmail,
+});
+
+// Login with Email
+openApiRouter.post({
+  path: '/v1/login',
+  summary: 'Login a user with Email',
+  description: 'Validates login credentials and returns a Access/Refresh token pair if successful.',
+  tags: ['Authentication'],
+  request: loginWithEmailSchema,
+  response: LoginSuccessResponseSchema,
+  errors: [400, 401, 500],
+  handler: authController.loginWithEmail,
 });
 
 export default openApiRouter.router;

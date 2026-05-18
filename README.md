@@ -50,6 +50,9 @@ Every technology in this stack has been selected for maximum type-safety, execut
 - **Argon2**: The industry-standard, secure password-hashing algorithm. Highly resistant to brute-force and GPU-based side-channel cracking.
 - **JSON Web Tokens (`jsonwebtoken`)**: Signed token arrays utilized for stateless, high-speed user authorization and session management.
 - **Zod**: Declarative, schema-driven validation middleware. Validates incoming query parameters, route segments, and payloads, ensuring only 100% compliant data reaches your controllers.
+- **Double Submit Cookie CSRF (`csrf-csrf`)**: Advanced, cryptographically secure CSRF protection tied to user-session identifiers with automated validation rules.
+- **Helmet**: Hardens standard HTTP response headers to protect against web vulnerabilities like XSS, clickjacking, and MIME-sniffing.
+- **HPP**: HTTP Parameter Pollution middleware that protects the server from query-string injection and pollution attacks.
 
 ### Interactive API Documentation
 
@@ -90,6 +93,32 @@ To handle transient network drops, background jobs are automatically configured 
 ### 4. Express 5 Compatibility
 
 Engineered on Express v5, utilizing safe `Object.assign` mapping strategies to validation schemas, bypassing the read-only Express 5 query/param getters, and eliminating manual router `try/catch` wrappers.
+
+---
+
+## 🔒 Production-Grade Security Hardening
+
+This boilerplate implements a zero-trust, production-grade security architecture designed to fully eliminate XSS and CSRF injection vectors:
+
+### 1. Hybrid In-Memory & Secure-Cookie Token Storage
+
+To achieve ironclad immunity against both Session Theft (XSS) and Session Hijacking (CSRF), authorization uses a **Hybrid Storage Model**:
+
+- **Access Tokens**: Transmitted strictly in JSON response bodies. The frontend stores them in volatile memory (never written to `localStorage` or `sessionStorage`), making them completely immune to malicious XSS script extraction.
+- **Refresh Tokens**: Set as `HttpOnly`, `Secure`, `SameSite=Strict` cookies. These cookies are cryptographically protected and completely inaccessible to client-side JavaScript, ensuring XSS scripts cannot read or leak them.
+
+### 2. Cryptographically Bound Double-Submit CSRF Protection
+
+Equipped with `csrf-csrf` middleware enforcing the industry-standard Double Submit Cookie pattern:
+
+- **Session-Stabilized Signature**: The signature is cryptographically bound to the user's stable **User ID** (decoded on the fly from the token). This ensures the CSRF token remains completely valid throughout the user's logged-in session, surviving token rotations while maintaining high-grade, identity-bound safety.
+- **OpenAPI Documented**: A system route (`GET /api/csrf-token`) provides the CSRF token. It is fully registered under Zod schema declarations and interactive Swagger schemas.
+- **Global Error Handling**: Any state-mutating request (`POST`, `PUT`, `DELETE`, `PATCH`) with missing/invalid headers is intercepted globally and returned as a secure, custom `403 Forbidden` JSON response without leaking trace frames.
+
+### 3. Helmet & HTTP Parameter Pollution (HPP) Guards
+
+- **Helmet Headers**: Automatically configures 15+ secure HTTP headers (including Content-Security-Policy fallbacks, Strict-Transport-Security, X-Frame-Options, and X-Content-Type-Options) to protect clients from modern web exploits.
+- **HPP Protection**: Intercepts and mitigates parameter pollution attacks by sanitizing duplicate key-value pairs inside request queries and bodies.
 
 ---
 
