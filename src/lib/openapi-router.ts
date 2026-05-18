@@ -3,11 +3,7 @@ import type { Router, RequestHandler } from 'express';
 import { registry } from '@/lib/openapi';
 import { z } from 'zod';
 import { SchemaMiddleware } from '@/middlewares';
-import {
-  StandardErrorResponseSchema,
-  ConflictErrorResponseSchema,
-  ServerErrorResponseSchema,
-} from '@/schemas/common';
+import { StandardErrorResponseSchema, ConflictErrorResponseSchema, ServerErrorResponseSchema } from '@/schemas/common';
 
 export interface OpenApiRouteConfig {
   path: string;
@@ -34,21 +30,8 @@ export class OpenApiRouter {
     this.router = express.Router();
   }
 
-  private registerRoute(
-    method: 'get' | 'post' | 'put' | 'patch' | 'delete',
-    config: OpenApiRouteConfig
-  ) {
-    const {
-      path,
-      summary,
-      description,
-      tags,
-      request,
-      response,
-      errors,
-      handler,
-      middlewares = [],
-    } = config;
+  private registerRoute(method: 'get' | 'post' | 'put' | 'patch' | 'delete', config: OpenApiRouteConfig) {
+    const { path, summary, description, tags, request, response, errors, handler, middlewares = [] } = config;
 
     // 1. Build OpenAPI Responses dynamically
     const responses: any = {

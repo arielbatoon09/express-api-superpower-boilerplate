@@ -1,8 +1,4 @@
-import {
-  extendZodWithOpenApi,
-  OpenAPIRegistry,
-  OpenApiGeneratorV3,
-} from '@asteasolutions/zod-to-openapi';
+import { extendZodWithOpenApi, OpenAPIRegistry, OpenApiGeneratorV3 } from '@asteasolutions/zod-to-openapi';
 import { z } from 'zod';
 import { envConfig } from '@/config/env';
 import swaggerUi from 'swagger-ui-express';

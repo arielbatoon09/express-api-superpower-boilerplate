@@ -33,10 +33,7 @@ export abstract class BaseController {
    * Sends a standardized response based on a service result object.
    * Automatically pipes the response through the standard sendSuccess/sendError loggers.
    */
-  protected send(
-    res: Response,
-    result: { code: number; status: string; message: string; data?: any; errors?: any[] }
-  ) {
+  protected send(res: Response, result: { code: number; status: string; message: string; data?: any; errors?: any[] }) {
     if (result.code >= 200 && result.code < 300) {
       return sendSuccess({
         res,

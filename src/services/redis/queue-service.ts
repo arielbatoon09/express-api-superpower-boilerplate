@@ -44,12 +44,7 @@ export class QueueService {
   /**
    * Adds a job to a specific queue cleanly with robust logging, type-safety, and retry options.
    */
-  public async addJob<T = any>(
-    queueName: string,
-    jobName: string,
-    data: T,
-    opts?: JobsOptions
-  ): Promise<Job<T>> {
+  public async addJob<T = any>(queueName: string, jobName: string, data: T, opts?: JobsOptions): Promise<Job<T>> {
     try {
       const queue = this.getQueue(queueName);
       logger.info(`QueueService: Appending job [${jobName}] to queue [${queueName}]`);
@@ -66,15 +61,12 @@ export class QueueService {
         ...opts,
       });
 
-      logger.info(
-        `QueueService: Job [${jobName}] appended successfully. Assigned JobId: ${job.id}`
-      );
+      logger.info(`QueueService: Job [${jobName}] appended successfully. Assigned JobId: ${job.id}`);
       return job;
     } catch (error: any) {
-      logger.error(
-        `QueueService: Failed to append job [${jobName}] to queue [${queueName}]: ${error.message}`,
-        { error }
-      );
+      logger.error(`QueueService: Failed to append job [${jobName}] to queue [${queueName}]: ${error.message}`, {
+        error,
+      });
       throw error;
     }
   }

@@ -3,14 +3,15 @@ import { AuthController } from '@/controllers/auth-controller';
 import {
   signupWithEmailSchema,
   SignupSuccessResponseSchema,
-} from '@/schemas/auth/signup-with-email-schema';
+  verifyEmailSchema,
+  VerifyEmailSuccessResponseSchema,
+} from '@/schemas/auth';
 import { OpenApiRouter } from '@/lib/openapi-router';
 
-// Note: This router gets mounted at "/api/auth" in the main index.ts.
-// We pass "/api/auth" to OpenApiRouter so the Swagger path resolves correctly.
 const openApiRouter = new OpenApiRouter('/api/auth');
 const authController = container.resolve(AuthController);
 
+// Sign Up with Email
 openApiRouter.post({
   path: '/v1/signup',
   summary: 'Signup a new user with Email',
@@ -21,6 +22,18 @@ openApiRouter.post({
   response: SignupSuccessResponseSchema,
   errors: [400, 409, 500],
   handler: authController.signupWithEmail,
+});
+
+// Verify Email
+openApiRouter.get({
+  path: '/v1/verify-email',
+  summary: 'Verify email address',
+  description: 'Verifies an email address using a one-time token sent to the user.',
+  tags: ['Authentication'],
+  request: verifyEmailSchema,
+  response: VerifyEmailSuccessResponseSchema,
+  errors: [400, 401, 500],
+  handler: authController.verifyEmail,
 });
 
 export default openApiRouter.router;

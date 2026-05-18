@@ -60,11 +60,7 @@ export class SignupWithEmailService {
   }
 
   // Setup email verification process and enqueue email sending
-  private async setupEmailVerification(
-    userId: string,
-    name: string | null,
-    email: string
-  ): Promise<void> {
+  private async setupEmailVerification(userId: string, name: string | null, email: string): Promise<void> {
     const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24-hour verification window
 
@@ -76,7 +72,8 @@ export class SignupWithEmailService {
     });
 
     // Compile email HTML via file template
-    const emailVerificationURL = `${envConfig.FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}`;
+    // const emailVerificationURL = `${envConfig.FRONTEND_URL}/verify-email?token=${encodeURIComponent(token)}`;
+    const emailVerificationURL = `${envConfig.BACKEND_URL}/api/auth/v1/verify-email?token=${encodeURIComponent(token)}`;
     const html = renderMailTemplate('verify-email.html', {
       name: name ?? 'there',
       emailVerificationURL,

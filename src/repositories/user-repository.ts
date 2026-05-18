@@ -23,12 +23,7 @@ export class UserRepository {
     return await this.db.user.findFirst({ where: { email } });
   }
 
-  async create(data: {
-    name?: string | null;
-    email: string;
-    password?: string | null;
-    emailVerifiedAt?: Date | null;
-  }) {
+  async create(data: { name?: string | null; email: string; password?: string | null; emailVerifiedAt?: Date | null }) {
     return await this.db.user.create({
       data,
       select: {

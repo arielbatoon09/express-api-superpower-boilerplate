@@ -48,9 +48,7 @@ export class SchemaMiddleware {
         const fullPath = issue.path.join('.');
 
         // Strip the prefix for a cleaner API response (e.g. "email" instead of "body.email")
-        const cleanPath = issue.path
-          .filter(p => p !== 'body' && p !== 'query' && p !== 'params')
-          .join('.');
+        const cleanPath = issue.path.filter(p => p !== 'body' && p !== 'query' && p !== 'params').join('.');
 
         return {
           path: cleanPath || fullPath,

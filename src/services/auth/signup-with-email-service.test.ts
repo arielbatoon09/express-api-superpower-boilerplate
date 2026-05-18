@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SignupWithEmailService } from './signup-with-email';
+import { SignupWithEmailService } from '@/services/auth/signup-with-email-service';
 
 // Mock password hashing asynchronously to keep unit tests fast and independent
 vi.mock('@/utils/password', () => ({

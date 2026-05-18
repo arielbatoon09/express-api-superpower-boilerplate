@@ -17,6 +17,7 @@ export const signupWithEmailSchema = z.object({
       .min(8, 'Password must be at least 8 characters')
       .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
       .regex(/[0-9]/, 'Password must contain at least one number')
+      .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character')
       .openapi({ example: 'SecurePass123!' }),
   }),
 });
@@ -25,9 +26,7 @@ export const signupWithEmailSchema = z.object({
 export const SignupSuccessResponseSchema = z.object({
   code: z.number().openapi({ example: 200 }),
   status: z.string().openapi({ example: 'success' }),
-  message: z
-    .string()
-    .openapi({ example: 'Created account successfully! Please verify your email.' }),
+  message: z.string().openapi({ example: 'Created account successfully! Please verify your email.' }),
   data: z.object({
     user: z.object({
       id: z.string().uuid().openapi({ example: '1e9b28b6-9dfa-4573-b3c4-e692b15809bb' }),

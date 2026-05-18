@@ -26,12 +26,7 @@ export function AsyncController() {
     // 2. Legacy / Experimental Decorators (TS <5.0 or experimentalDecorators: true)
     if (descriptor) {
       const originalMethod = descriptor.value;
-      descriptor.value = async function (
-        this: any,
-        req: Request,
-        res: Response,
-        next: NextFunction
-      ) {
+      descriptor.value = async function (this: any, req: Request, res: Response, next: NextFunction) {
         try {
           return await originalMethod.call(this, req, res, next);
         } catch (error) {

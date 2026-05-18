@@ -48,9 +48,7 @@ const startServer = () => {
       console.log('');
       console.log(`  ${chalk.bold.cyan('▲')} ${chalk.bold(envConfig.APP_NAME)}`);
       console.log(`  ${chalk.gray('- URL:')}            ${chalk.cyan(envConfig.BACKEND_URL)}`);
-      console.log(
-        `  ${chalk.gray('- API Docs:')}       ${chalk.cyan(`${envConfig.BACKEND_URL}/api/docs`)}`
-      );
+      console.log(`  ${chalk.gray('- API Docs:')}       ${chalk.cyan(`${envConfig.BACKEND_URL}/api/docs`)}`);
       console.log(`  ${chalk.gray('- Environment:')}    ${mode}`);
       console.log(`  ${chalk.gray('- Port:')}           ${envConfig.PORT}`);
       console.log('');

@@ -110,10 +110,7 @@ describe('Socket.IO Service Integration Tests', () => {
       });
 
       // Client 2 (User 456)
-      const client2Token = jwt.sign(
-        { id: 'user_456', email: 'user2@example.com' },
-        envConfig.JWT_SECRET
-      );
+      const client2Token = jwt.sign({ id: 'user_456', email: 'user2@example.com' }, envConfig.JWT_SECRET);
       const client2: ClientSocket = ioc(`http://localhost:${port}/chat`, {
         transports: ['websocket'],
         auth: { token: client2Token },
