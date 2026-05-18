@@ -62,7 +62,7 @@ export class SignupWithEmailService {
   // Setup email verification process and enqueue email sending
   private async setupEmailVerification(userId: string, name: string | null, email: string): Promise<void> {
     const token = crypto.randomUUID();
-    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24-hour verification window
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15-minute verification window
 
     // Persist verification token record
     await this.tokenRepository.createEmailVerificationToken({
