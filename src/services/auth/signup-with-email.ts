@@ -1,6 +1,8 @@
 import { logger } from '@/lib/logger';
 import { SignupWithEmailInput } from '@/schemas/auth';
+import { injectable } from "tsyringe";
 
+@injectable()
 export class SignupWithEmailService {
   constructor() {
     logger.info('Email signup service initialized');
