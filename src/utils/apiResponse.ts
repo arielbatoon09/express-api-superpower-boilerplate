@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import type { Response } from 'express';
 import { logger } from '@/lib/logger';
 import { envConfig } from '@/config/env';
 import { STAGES } from '@/constants/env';

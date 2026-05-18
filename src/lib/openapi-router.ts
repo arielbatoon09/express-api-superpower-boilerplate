@@ -1,4 +1,5 @@
-import { Router, RequestHandler } from 'express';
+import express from 'express';
+import type { Router, RequestHandler } from 'express';
 import { registry } from '@/lib/openapi';
 import { z } from 'zod';
 import { SchemaMiddleware } from '@/middlewares';
@@ -30,7 +31,7 @@ export class OpenApiRouter {
   public router: Router;
 
   constructor(private prefix: string = '') {
-    this.router = Router();
+    this.router = express.Router();
   }
 
   private registerRoute(

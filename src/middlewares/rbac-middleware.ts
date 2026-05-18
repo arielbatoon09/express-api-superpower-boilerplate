@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { Role } from '@prisma/client';
 import { JwtPayload } from '@/lib/jwt';
 import { sendError } from '@/utils/apiResponse';
