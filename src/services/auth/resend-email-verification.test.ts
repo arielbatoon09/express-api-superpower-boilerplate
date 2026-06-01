@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ResendEmailVerificationService } from '@/services/auth/resend-email-verification';
+import { NotFoundException, BadRequestException } from '@/exceptions';
 
 describe('ResendEmailVerificationService Unit Tests', () => {
   let mockUserRepository: any;
@@ -26,25 +27,19 @@ describe('ResendEmailVerificationService Unit Tests', () => {
     service = new ResendEmailVerificationService(mockUserRepository, mockTokenRepository, mockQueueService);
   });
 
-  it('should return 404 error if user is not found', async () => {
+  it('should throw NotFoundException if user is not found', async () => {
     // Arrange
     mockUserRepository.findByEmail.mockResolvedValue(null);
 
-    // Act
-    const response = await service.execute({ email: 'nonexistent@example.com' });
-
-    // Assert
-    expect(response).toEqual({
-      code: 404,
-      status: 'error',
-      message: 'User not found',
-    });
+    // Act & Assert
+    await expect(service.execute({ email: 'nonexistent@example.com' })).rejects.toThrow(NotFoundException);
+    await expect(service.execute({ email: 'nonexistent@example.com' })).rejects.toThrow('User not found');
 
     expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('nonexistent@example.com');
     expect(mockTokenRepository.findLatestEmailVerificationTokenByUser).not.toHaveBeenCalled();
   });
 
-  it('should return 200 and say "Email already verified" if user has verified status', async () => {
+  it('should return success with "Email already verified" if user has verified status', async () => {
     // Arrange
     const mockUser = {
       id: 'user-id-123',
@@ -58,8 +53,6 @@ describe('ResendEmailVerificationService Unit Tests', () => {
 
     // Assert
     expect(response).toEqual({
-      code: 200,
-      status: 'success',
       message: 'Email already verified',
     });
 
@@ -67,7 +60,7 @@ describe('ResendEmailVerificationService Unit Tests', () => {
     expect(mockTokenRepository.findLatestEmailVerificationTokenByUser).not.toHaveBeenCalled();
   });
 
-  it('should return 400 error if there is a previous token that is still active and valid', async () => {
+  it('should throw BadRequestException if there is a previous token that is still active and valid', async () => {
     // Arrange
     const mockUser = {
       id: 'user-id-123',
@@ -82,18 +75,10 @@ describe('ResendEmailVerificationService Unit Tests', () => {
     mockUserRepository.findByEmail.mockResolvedValue(mockUser);
     mockTokenRepository.findLatestEmailVerificationTokenByUser.mockResolvedValue(mockActiveToken);
 
-    // Act
-    const response = await service.execute({ email: 'user@example.com' });
+    // Act & Assert
+    await expect(service.execute({ email: 'user@example.com' })).rejects.toThrow(BadRequestException);
+    await expect(service.execute({ email: 'user@example.com' })).rejects.toThrow('Current verification link is still valid');
 
-    // Assert
-    expect(response).toEqual({
-      code: 400,
-      status: 'error',
-      message: 'Current verification link is still valid',
-    });
-
-    expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('user@example.com');
-    expect(mockTokenRepository.findLatestEmailVerificationTokenByUser).toHaveBeenCalledWith('user-id-123');
     expect(mockTokenRepository.cleanupInvalidTokensByUser).not.toHaveBeenCalled();
     expect(mockTokenRepository.createEmailVerificationToken).not.toHaveBeenCalled();
   });
@@ -122,8 +107,6 @@ describe('ResendEmailVerificationService Unit Tests', () => {
 
     // Assert
     expect(response).toEqual({
-      code: 200,
-      status: 'success',
       message: 'Verification email resent successfully',
     });
 
@@ -166,8 +149,6 @@ describe('ResendEmailVerificationService Unit Tests', () => {
 
     // Assert
     expect(response).toEqual({
-      code: 200,
-      status: 'success',
       message: 'Verification email resent successfully',
     });
 
@@ -176,18 +157,11 @@ describe('ResendEmailVerificationService Unit Tests', () => {
     expect(mockTokenRepository.createEmailVerificationToken).toHaveBeenCalled();
   });
 
-  it('should handle unexpected internal errors safely by logging and returning a 500 response', async () => {
+  it('should propagate unexpected internal errors as unhandled exceptions', async () => {
     // Arrange
     mockUserRepository.findByEmail.mockRejectedValue(new Error('PostgreSQL connection timeout'));
 
-    // Act
-    const response = await service.execute({ email: 'user@example.com' });
-
-    // Assert
-    expect(response).toEqual({
-      code: 500,
-      status: 'error',
-      message: 'Unable to resend verification email',
-    });
+    // Act & Assert
+    await expect(service.execute({ email: 'user@example.com' })).rejects.toThrow('PostgreSQL connection timeout');
   });
 });

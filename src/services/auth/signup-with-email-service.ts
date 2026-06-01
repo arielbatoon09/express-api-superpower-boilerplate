@@ -6,7 +6,7 @@ import { QueueService } from '@/services/redis/queue-service';
 import { hashPassword } from '@/utils/password';
 import { renderMailTemplate } from '@/utils/mail-template';
 import { envConfig } from '@/config/env';
-import { logger } from '@/lib/logger';
+import { ConflictException } from '@/exceptions';
 
 @injectable()
 export class SignupWithEmailService {
@@ -17,35 +17,21 @@ export class SignupWithEmailService {
   ) {}
 
   public async execute(data: { name?: string | null; email: string; password: string }) {
-    try {
-      await this.ensureEmailIsUnique(data.email);
-      const createdUser = await this.registerUser(data.name, data.email, data.password);
-      await this.setupEmailVerification(createdUser.id, createdUser.name, createdUser.email);
+    await this.ensureEmailIsUnique(data.email);
+    const createdUser = await this.registerUser(data.name, data.email, data.password);
+    await this.setupEmailVerification(createdUser.id, createdUser.name, createdUser.email);
 
-      return {
-        code: 200,
-        status: 'success',
-        message: 'Created account successfully! Please verify your email.',
-        data: { user: createdUser },
-      };
-    } catch (error: any) {
-      // Intercept and return structured business logic exceptions directly
-      const isBusinessException = 'code' in error && 'status' in error;
-      if (isBusinessException) {
-        return error;
-      }
-
-      // Log untracked database/network system failures securely
-      logger.error(`SignupWithEmailService failure: ${error.message}`, { error });
-      return { code: 500, status: 'error', message: 'Unable to create account' };
-    }
+    return {
+      message: 'Created account successfully! Please verify your email.',
+      data: { user: createdUser },
+    };
   }
 
   // Email checker if unique
   private async ensureEmailIsUnique(email: string): Promise<void> {
     const existing = await this.userRepository.findByEmail(email);
     if (existing) {
-      throw { code: 409, status: 'error', message: 'Email already registered' };
+      throw new ConflictException('Email already registered');
     }
   }
 

@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { VerifyEmailService } from '@/services/auth/verify-email-service';
+import { NotFoundException, GoneException } from '@/exceptions';
 
 describe('VerifyEmailService Unit Tests', () => {
   let mockUserRepository: any;
@@ -49,8 +50,6 @@ describe('VerifyEmailService Unit Tests', () => {
 
     // Assert
     expect(response).toEqual({
-      code: 200,
-      status: 'success',
       message: 'Verified Email Successfully!',
     });
 
@@ -85,8 +84,6 @@ describe('VerifyEmailService Unit Tests', () => {
 
     // Assert
     expect(response).toEqual({
-      code: 200,
-      status: 'success',
       message: 'Email already verified',
     });
 
@@ -96,27 +93,21 @@ describe('VerifyEmailService Unit Tests', () => {
     expect(mockTokenRepository.consumeToken).not.toHaveBeenCalled();
   });
 
-  it('should return 404 error if active verification token cannot be found in database', async () => {
+  it('should throw NotFoundException if active verification token cannot be found in database', async () => {
     // Arrange
     const token = 'non-existent-token';
     mockTokenRepository.findActiveEmailVerificationToken.mockResolvedValue(null);
 
-    // Act
-    const response = await service.execute({ token });
-
-    // Assert
-    expect(response).toEqual({
-      code: 404,
-      status: 'error',
-      message: 'Verification token not found',
-    });
+    // Act & Assert
+    await expect(service.execute({ token })).rejects.toThrow(NotFoundException);
+    await expect(service.execute({ token })).rejects.toThrow('Verification token not found');
 
     expect(mockTokenRepository.findActiveEmailVerificationToken).toHaveBeenCalledWith(token);
     expect(mockUserRepository.findById).not.toHaveBeenCalled();
     expect(mockTokenRepository.revokeToken).not.toHaveBeenCalled();
   });
 
-  it('should revoke token and return 410 error if token is expired', async () => {
+  it('should revoke token and throw GoneException if token is expired', async () => {
     // Arrange
     const token = 'expired-token';
     const mockTokenRecord = {
@@ -128,22 +119,16 @@ describe('VerifyEmailService Unit Tests', () => {
 
     mockTokenRepository.findActiveEmailVerificationToken.mockResolvedValue(mockTokenRecord);
 
-    // Act
-    const response = await service.execute({ token });
-
-    // Assert
-    expect(response).toEqual({
-      code: 410,
-      status: 'error',
-      message: 'Verification token expired',
-    });
+    // Act & Assert
+    await expect(service.execute({ token })).rejects.toThrow(GoneException);
+    await expect(service.execute({ token })).rejects.toThrow('Verification token expired');
 
     expect(mockTokenRepository.findActiveEmailVerificationToken).toHaveBeenCalledWith(token);
     expect(mockTokenRepository.revokeToken).toHaveBeenCalledWith('token-id-123');
     expect(mockUserRepository.findById).not.toHaveBeenCalled();
   });
 
-  it('should revoke token and return 404 error if associated user is not found in database', async () => {
+  it('should revoke token and throw NotFoundException if associated user is not found in database', async () => {
     // Arrange
     const token = 'valid-token-no-user';
     const mockTokenRecord = {
@@ -156,15 +141,9 @@ describe('VerifyEmailService Unit Tests', () => {
     mockTokenRepository.findActiveEmailVerificationToken.mockResolvedValue(mockTokenRecord);
     mockUserRepository.findById.mockResolvedValue(null); // User missing
 
-    // Act
-    const response = await service.execute({ token });
-
-    // Assert
-    expect(response).toEqual({
-      code: 404,
-      status: 'error',
-      message: 'User not found for this token',
-    });
+    // Act & Assert
+    await expect(service.execute({ token })).rejects.toThrow(NotFoundException);
+    await expect(service.execute({ token })).rejects.toThrow('User not found for this token');
 
     expect(mockTokenRepository.findActiveEmailVerificationToken).toHaveBeenCalledWith(token);
     expect(mockUserRepository.findById).toHaveBeenCalledWith('missing-user-id');
@@ -172,19 +151,12 @@ describe('VerifyEmailService Unit Tests', () => {
     expect(mockUserRepository.markEmailVerified).not.toHaveBeenCalled();
   });
 
-  it('should handle unexpected internal errors safely by logging and returning a 500 response', async () => {
+  it('should propagate unexpected internal errors as unhandled exceptions', async () => {
     // Arrange
     const token = 'token-triggering-db-crash';
     mockTokenRepository.findActiveEmailVerificationToken.mockRejectedValue(new Error('PostgreSQL database crashed'));
 
-    // Act
-    const response = await service.execute({ token });
-
-    // Assert
-    expect(response).toEqual({
-      code: 500,
-      status: 'error',
-      message: 'Unable to verify account',
-    });
+    // Act & Assert
+    await expect(service.execute({ token })).rejects.toThrow('PostgreSQL database crashed');
   });
 });

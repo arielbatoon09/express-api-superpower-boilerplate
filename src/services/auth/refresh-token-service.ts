@@ -2,7 +2,7 @@ import { injectable, inject } from 'tsyringe';
 import { UserRepository } from '@/repositories/user-repository';
 import { TokenRepository } from '@/repositories/token-repository';
 import { verifyRefreshToken, signAccessToken, signRefreshToken, TokenExpiry } from '@/lib/jwt';
-import { logger } from '@/lib/logger';
+import { BadRequestException, UnauthorizedException, NotFoundException } from '@/exceptions';
 
 @injectable()
 export class RefreshTokenService {
@@ -13,39 +13,28 @@ export class RefreshTokenService {
 
   public async execute(data: { refreshToken?: string }) {
     const { refreshToken } = data;
-    try {
-      const payload = this.verifyIncomingToken(refreshToken);
-      const activeToken = await this.getActiveToken(refreshToken!);
-      await this.ensureTokenNotExpired(activeToken);
-      const user = await this.getUser(payload.sub);
-      const tokens = await this.rotateSessionTokens(user, activeToken.id);
 
-      return {
-        code: 200,
-        status: 'success',
-        message: 'Tokens refreshed successfully',
-        data: { tokens },
-      };
-    } catch (error: any) {
-      const isBusinessException = 'code' in error && 'status' in error;
-      if (isBusinessException) {
-        return error;
-      }
+    const payload = this.verifyIncomingToken(refreshToken);
+    const activeToken = await this.getActiveToken(refreshToken!);
+    await this.ensureTokenNotExpired(activeToken);
+    const user = await this.getUser(payload.sub);
+    const tokens = await this.rotateSessionTokens(user, activeToken.id);
 
-      logger.error(`RefreshTokenService failure: ${error.message}`, { error });
-      return { code: 500, status: 'error', message: 'Unable to refresh token' };
-    }
+    return {
+      message: 'Tokens refreshed successfully',
+      data: { tokens },
+    };
   }
 
   // Verify Incoming Token
   private verifyIncomingToken(refreshToken?: string) {
     if (!refreshToken) {
-      throw { code: 400, status: 'error', message: 'Refresh token is required' };
+      throw new BadRequestException('Refresh token is required');
     }
 
     const payload = verifyRefreshToken(refreshToken);
     if (!payload) {
-      throw { code: 401, status: 'error', message: 'Invalid or expired refresh token' };
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
     return payload;
@@ -55,7 +44,7 @@ export class RefreshTokenService {
   private async getActiveToken(token: string) {
     const activeToken = await this.tokenRepository.findActiveRefreshToken(token);
     if (!activeToken) {
-      throw { code: 401, status: 'error', message: 'Refresh token has been revoked or consumed' };
+      throw new UnauthorizedException('Refresh token has been revoked or consumed');
     }
     return activeToken;
   }
@@ -65,7 +54,7 @@ export class RefreshTokenService {
     const isExpired = activeToken.expiresAt.getTime() < Date.now();
     if (isExpired) {
       await this.tokenRepository.revokeToken(activeToken.id);
-      throw { code: 401, status: 'error', message: 'Refresh token has expired' };
+      throw new UnauthorizedException('Refresh token has expired');
     }
   }
 
@@ -73,7 +62,7 @@ export class RefreshTokenService {
   private async getUser(userId: string) {
     const user = await this.userRepository.findById(userId);
     if (!user) {
-      throw { code: 404, status: 'error', message: 'User not found' };
+      throw new NotFoundException('User not found');
     }
     return user;
   }

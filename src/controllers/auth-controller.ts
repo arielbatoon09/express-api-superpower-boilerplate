@@ -36,7 +36,7 @@ export class AuthController extends BaseController {
   async signupWithEmail(req: Request, res: Response) {
     const { name, email, password } = req.body ?? {};
     const result = await this.signupService.execute({ name, email, password });
-    return this.send(res, result);
+    return this.ok(res, result.data, result.message);
   }
 
   // Verify email controller
@@ -44,7 +44,7 @@ export class AuthController extends BaseController {
   async verifyEmail(req: Request, res: Response) {
     const token = req.query.token as string;
     const result = await this.verifyEmailService.execute({ token });
-    return this.send(res, result);
+    return this.ok(res, undefined, result.message);
   }
 
   // Login with email controller
@@ -53,7 +53,7 @@ export class AuthController extends BaseController {
     const { email, password } = req.body ?? {};
     const result = await this.loginService.execute({ email, password });
 
-    if (result.code === 200 && result.data?.tokens) {
+    if (result.data?.tokens) {
       const { accessToken, refreshToken, expiresIn, refreshExpiresIn } = result.data.tokens;
 
       // Detect if the client requests native token delivery instead of secure cookies
@@ -63,7 +63,7 @@ export class AuthController extends BaseController {
         // --- WEB CLIENTS: Secure HTTP-Only Cookies ---
         setAuthCookies(res, { refreshToken });
 
-        result.data.tokens = {
+        (result.data as any).tokens = {
           accessToken,
           expiresIn,
         };
@@ -78,7 +78,7 @@ export class AuthController extends BaseController {
       }
     }
 
-    return this.send(res, result);
+    return this.ok(res, result.data, result.message);
   }
 
   // Resend verification email controller
@@ -86,7 +86,7 @@ export class AuthController extends BaseController {
   async resendEmailVerification(req: Request, res: Response) {
     const { email } = req.body ?? {};
     const result = await this.resendEmailVerificationService.execute({ email });
-    return this.send(res, result);
+    return this.ok(res, undefined, result.message);
   }
 
   // Forgot password controller
@@ -94,7 +94,7 @@ export class AuthController extends BaseController {
   async forgotPassword(req: Request, res: Response) {
     const { email } = req.body ?? {};
     const result = await this.forgotPasswordService.execute({ email });
-    return this.send(res, result);
+    return this.ok(res, undefined, result.message);
   }
 
   // Reset password controller
@@ -102,7 +102,7 @@ export class AuthController extends BaseController {
   async resetPassword(req: Request, res: Response) {
     const { token, password } = req.body ?? {};
     const result = await this.resetPasswordService.execute({ token, password });
-    return this.send(res, result);
+    return this.ok(res, undefined, result.message);
   }
 
   // Change password controller
@@ -111,7 +111,7 @@ export class AuthController extends BaseController {
     const { currentPassword, newPassword } = req.body ?? {};
     const userId = (req as any).user?.sub;
     const result = await this.changePasswordService.execute({ userId, currentPassword, newPassword });
-    return this.send(res, result);
+    return this.ok(res, undefined, result.message);
   }
 
   // Refresh token controller
@@ -122,12 +122,12 @@ export class AuthController extends BaseController {
 
     const result = await this.refreshTokenService.execute({ refreshToken });
 
-    if (result.code === 200 && result.data?.tokens) {
+    if (result.data?.tokens) {
       const { accessToken, refreshToken: newRefreshToken, expiresIn, refreshExpiresIn } = result.data.tokens;
 
       if (useCookies) {
         setAuthCookies(res, { refreshToken: newRefreshToken });
-        result.data.tokens = {
+        (result.data as any).tokens = {
           accessToken,
           expiresIn,
         };
@@ -141,7 +141,7 @@ export class AuthController extends BaseController {
       }
     }
 
-    return this.send(res, result);
+    return this.ok(res, result.data, result.message);
   }
 
   // Logout controller
@@ -156,6 +156,6 @@ export class AuthController extends BaseController {
       clearAuthCookies(res);
     }
 
-    return this.send(res, result);
+    return this.ok(res, undefined, result.message);
   }
 }

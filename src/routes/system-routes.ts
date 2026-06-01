@@ -47,10 +47,10 @@ openApiRouter.get({
   handler: (req, res) => {
     sendSuccess({
       res,
-      message: `${envConfig.APP_NAME} instance is healthy`,
+      message: `${envConfig.APP_NAME} instance is healthy!`,
       data: {
         timestamp: new Date().toISOString(),
-        environment: envConfig.STAGE,
+        environment: envConfig.STAGE === 'dev' ? 'Development' : 'Production'
       },
     });
   },

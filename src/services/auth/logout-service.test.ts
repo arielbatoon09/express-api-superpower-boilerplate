@@ -19,8 +19,6 @@ describe('LogoutService Unit Tests', () => {
     const response = await service.execute({ refreshToken: undefined });
 
     expect(response).toEqual({
-      code: 200,
-      status: 'success',
       message: 'Logged out successfully',
     });
     expect(mockTokenRepository.findActiveRefreshToken).not.toHaveBeenCalled();
@@ -33,8 +31,6 @@ describe('LogoutService Unit Tests', () => {
     const response = await service.execute({ refreshToken: 'missing-token' });
 
     expect(response).toEqual({
-      code: 200,
-      status: 'success',
       message: 'Logged out successfully',
     });
     expect(mockTokenRepository.findActiveRefreshToken).toHaveBeenCalledWith('missing-token');
@@ -50,23 +46,15 @@ describe('LogoutService Unit Tests', () => {
     const response = await service.execute({ refreshToken: 'active-token' });
 
     expect(response).toEqual({
-      code: 200,
-      status: 'success',
       message: 'Logged out successfully',
     });
     expect(mockTokenRepository.findActiveRefreshToken).toHaveBeenCalledWith('active-token');
     expect(mockTokenRepository.revokeToken).toHaveBeenCalledWith('token-uuid');
   });
 
-  it('should return error 500 if database fail', async () => {
+  it('should propagate unexpected internal errors as unhandled exceptions', async () => {
     mockTokenRepository.findActiveRefreshToken.mockRejectedValue(new Error('Prisma database failure'));
 
-    const response = await service.execute({ refreshToken: 'active-token' });
-
-    expect(response).toEqual({
-      code: 500,
-      status: 'error',
-      message: 'Unable to logout',
-    });
+    await expect(service.execute({ refreshToken: 'active-token' })).rejects.toThrow('Prisma database failure');
   });
 });

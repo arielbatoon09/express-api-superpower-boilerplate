@@ -2,7 +2,7 @@ import { injectable, inject } from 'tsyringe';
 import { UserRepository } from '@/repositories/user-repository';
 import { TokenRepository } from '@/repositories/token-repository';
 import { hashPassword } from '@/utils/password';
-import { logger } from '@/lib/logger';
+import { NotFoundException, GoneException } from '@/exceptions';
 
 @injectable()
 export class ResetPasswordService {
@@ -13,33 +13,22 @@ export class ResetPasswordService {
 
   public async execute(data: { token: string; password: string }) {
     const { token, password } = data;
-    try {
-      const activeToken = await this.getActiveResetToken(token);
-      await this.ensureTokenNotExpired(activeToken);
-      await this.updateUserPassword(activeToken.userId, password);
-      await this.consumeResetToken(activeToken.id);
 
-      return {
-        code: 200,
-        status: 'success',
-        message: 'Password reset successfully',
-      };
-    } catch (error: any) {
-      const isBusinessException = 'code' in error && 'status' in error;
-      if (isBusinessException) {
-        return error;
-      }
+    const activeToken = await this.getActiveResetToken(token);
+    await this.ensureTokenNotExpired(activeToken);
+    await this.updateUserPassword(activeToken.userId, password);
+    await this.consumeResetToken(activeToken.id);
 
-      logger.error(`ResetPasswordService failure: ${error.message}`, { error });
-      return { code: 500, status: 'error', message: 'Unable to reset password' };
-    }
+    return {
+      message: 'Password reset successfully',
+    };
   }
 
   // Get Active Reset Token
   private async getActiveResetToken(token: string) {
     const activeToken = await this.tokenRepository.findActivePasswordResetToken(token);
     if (!activeToken) {
-      throw { code: 404, status: 'error', message: 'Reset token not found or already used' };
+      throw new NotFoundException('Reset token not found or already used');
     }
     return activeToken;
   }
@@ -49,7 +38,7 @@ export class ResetPasswordService {
     const isExpired = activeToken.expiresAt.getTime() < Date.now();
     if (isExpired) {
       await this.tokenRepository.revokeToken(activeToken.id);
-      throw { code: 410, status: 'error', message: 'Reset token expired' };
+      throw new GoneException('Reset token expired');
     }
   }
 

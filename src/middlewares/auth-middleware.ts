@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 import { verifyAccessToken, JwtPayload } from '@/lib/jwt';
-import { sendError } from '@/utils/apiResponse';
+import { UnauthorizedException } from '@/exceptions';
 
 type AuthenticatedRequest = Request & { user?: JwtPayload };
 
@@ -12,12 +12,12 @@ export class AuthMiddleware {
     const accessToken = AuthMiddleware.extractBearerToken(req.headers.authorization);
 
     if (!accessToken) {
-      return AuthMiddleware.handleUnauthorized(res, 'Authentication required');
+      throw new UnauthorizedException('Authentication required');
     }
 
     const payload = verifyAccessToken(accessToken);
     if (!payload) {
-      return AuthMiddleware.handleUnauthorized(res, 'Invalid or expired token');
+      throw new UnauthorizedException('Invalid or expired token');
     }
 
     authReq.user = payload;
@@ -30,14 +30,5 @@ export class AuthMiddleware {
     const [scheme, token] = header.split(' ');
     if (!scheme || scheme.toLowerCase() !== 'bearer' || !token) return undefined;
     return token.trim();
-  }
-
-  // Handle Unauthorized Requests
-  private static handleUnauthorized(res: Response, message: string) {
-    return sendError({
-      res,
-      message,
-      statusCode: 401,
-    });
   }
 }

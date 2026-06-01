@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import { Role } from '@prisma/client';
 import { JwtPayload } from '@/lib/jwt';
-import { sendError } from '@/utils/apiResponse';
+import { UnauthorizedException, ForbiddenException } from '@/exceptions';
 
 type AuthenticatedRequest = Request & { user?: JwtPayload };
 
@@ -11,32 +11,14 @@ export class RBACMiddleware {
       const authReq = req as AuthenticatedRequest;
 
       if (!authReq.user) {
-        return this.handleUnauthorized(res);
+        throw new UnauthorizedException('Authentication required');
       }
 
       if (!roles.includes(authReq.user.role as Role)) {
-        return this.handleForbidden(res);
+        throw new ForbiddenException('Forbidden: You do not have the required role');
       }
 
       return next();
     };
-  }
-
-  // Handle unauthorized requests (missing auth user details).
-  private static handleUnauthorized(res: Response) {
-    return sendError({
-      res,
-      message: 'Authentication required',
-      statusCode: 401,
-    });
-  }
-
-  // Handle forbidden requests (insufficient role privileges).
-  private static handleForbidden(res: Response) {
-    return sendError({
-      res,
-      message: 'Forbidden: You do not have the required role',
-      statusCode: 403,
-    });
   }
 }

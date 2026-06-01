@@ -13,13 +13,10 @@ import { QueueService } from '@/services/redis/queue-service';
 
 const startServer = () => {
   try {
-    // 1. Create standard HTTP server around Express App
     const server = http.createServer(app);
-
-    // 2. Initialize and attach Socket Service singleton
     SocketService.getInstance().init(server);
 
-    // 3. Connect to Database (Non-blocking startup check for serverful resilience)
+    // --- Database Connection ---
     prisma
       .$connect()
       .then(() => {
@@ -29,19 +26,18 @@ const startServer = () => {
         logger.error('CRITICAL: Database connection failed on startup:', error);
       });
 
-    // Connect to Redis (Non-blocking startup check for serverful resilience)
+    // --- Redis Connection ---
     redis
       .ping()
       .then(() => {
         logger.info('Redis connected successfully.');
-        // Start background workers
         initMailWorker();
       })
       .catch(error => {
         logger.error('CRITICAL: Redis connection failed on startup:', error);
       });
 
-    // 4. Listen on port using HTTP Server
+    // --- HTTP Server Start ---
     server.listen(envConfig.PORT, () => {
       const mode = envConfig.STAGE === 'prod' ? 'Production' : 'Development';
 
@@ -56,7 +52,7 @@ const startServer = () => {
       console.log('');
     });
 
-    // 5. Production-Ready Graceful Shutdown Handlers
+    // --- Graceful Shutdown Handlers ---
     const handleShutdown = async (signal: string) => {
       logger.info(`Received ${signal}. Starting graceful shutdown...`);
 

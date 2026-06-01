@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ForgotPasswordService } from '@/services/auth/forgot-password-service';
+import { BadRequestException } from '@/exceptions';
 
 vi.mock('@/utils/mail-template', () => ({
   renderMailTemplate: vi.fn().mockReturnValue('<h1>Reset Password</h1>'),
@@ -36,27 +37,21 @@ describe('ForgotPasswordService Unit Tests', () => {
     const response = await service.execute({ email: 'nonexistent@example.com' });
 
     expect(response).toEqual({
-      code: 200,
-      status: 'success',
       message: 'If that email is registered, we have sent a reset password link.',
     });
     expect(mockTokenRepository.createPasswordResetToken).not.toHaveBeenCalled();
     expect(mockQueueService.addJob).not.toHaveBeenCalled();
   });
 
-  it('should throw error 400 if user has an active reset token already', async () => {
+  it('should throw BadRequestException if user has an active reset token already', async () => {
     mockUserRepository.findByEmail.mockResolvedValue({ id: 'user-uuid', name: 'John', email: 'john@example.com' });
     mockTokenRepository.findLatestPasswordResetTokenByUser.mockResolvedValue({
       expiresAt: new Date(Date.now() + 10 * 60 * 1000), // valid for 10 more minutes
     });
 
-    const response = await service.execute({ email: 'john@example.com' });
+    await expect(service.execute({ email: 'john@example.com' })).rejects.toThrow(BadRequestException);
+    await expect(service.execute({ email: 'john@example.com' })).rejects.toThrow('Current password reset link is still valid');
 
-    expect(response).toEqual({
-      code: 400,
-      status: 'error',
-      message: 'Current password reset link is still valid',
-    });
     expect(mockTokenRepository.createPasswordResetToken).not.toHaveBeenCalled();
   });
 
@@ -70,8 +65,6 @@ describe('ForgotPasswordService Unit Tests', () => {
     const response = await service.execute({ email: 'john@example.com' });
 
     expect(response).toEqual({
-      code: 200,
-      status: 'success',
       message: 'If that email is registered, we have sent a reset password link.',
     });
 
@@ -94,15 +87,9 @@ describe('ForgotPasswordService Unit Tests', () => {
     );
   });
 
-  it('should handle internal failure safely by returning 500', async () => {
+  it('should propagate unexpected internal errors as unhandled exceptions', async () => {
     mockUserRepository.findByEmail.mockRejectedValue(new Error('DB crashed'));
 
-    const response = await service.execute({ email: 'john@example.com' });
-
-    expect(response).toEqual({
-      code: 500,
-      status: 'error',
-      message: 'Unable to process forgot password request',
-    });
+    await expect(service.execute({ email: 'john@example.com' })).rejects.toThrow('DB crashed');
   });
 });

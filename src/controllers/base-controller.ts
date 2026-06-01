@@ -1,5 +1,6 @@
 import type { Response } from 'express';
-import { sendSuccess, sendError } from '@/utils/apiResponse';
+import { sendSuccess } from '@/utils/apiResponse';
+import { HttpException, BadRequestException, UnauthorizedException, ForbiddenException, NotFoundException } from '@/exceptions';
 
 /**
  * Base Controller class that provides common scaffolding, utility functions,
@@ -29,28 +30,6 @@ export abstract class BaseController {
     }
   }
 
-  /**
-   * Sends a standardized response based on a service result object.
-   * Automatically pipes the response through the standard sendSuccess/sendError loggers.
-   */
-  protected send(res: Response, result: { code: number; status: string; message: string; data?: any; errors?: any[] }) {
-    if (result.code >= 200 && result.code < 300) {
-      return sendSuccess({
-        res,
-        message: result.message,
-        data: result.data,
-        statusCode: result.code,
-      });
-    }
-
-    return sendError({
-      res,
-      message: result.message,
-      statusCode: result.code,
-      errors: result.errors,
-    });
-  }
-
   // ==========================================
   // HTTP Success Response Helpers
   // ==========================================
@@ -70,41 +49,41 @@ export abstract class BaseController {
   }
 
   // ==========================================
-  // HTTP Error Response Helpers
+  // HTTP Error Helpers (throw exceptions)
   // ==========================================
 
   /**
-   * HTTP 400 Bad Request client error response.
+   * Throws a 400 Bad Request exception.
    */
-  protected clientError(res: Response, message = 'Bad Request', error?: any) {
-    return sendError({ res, message, statusCode: 400, error });
+  protected clientError(message = 'Bad Request'): never {
+    throw new BadRequestException(message);
   }
 
   /**
-   * HTTP 401 Unauthorized response.
+   * Throws a 401 Unauthorized exception.
    */
-  protected unauthorized(res: Response, message = 'Authentication required') {
-    return sendError({ res, message, statusCode: 401 });
+  protected unauthorized(message = 'Authentication required'): never {
+    throw new UnauthorizedException(message);
   }
 
   /**
-   * HTTP 403 Forbidden response.
+   * Throws a 403 Forbidden exception.
    */
-  protected forbidden(res: Response, message = 'Forbidden: Insufficient privileges') {
-    return sendError({ res, message, statusCode: 403 });
+  protected forbidden(message = 'Forbidden: Insufficient privileges'): never {
+    throw new ForbiddenException(message);
   }
 
   /**
-   * HTTP 404 Not Found response.
+   * Throws a 404 Not Found exception.
    */
-  protected notFound(res: Response, message = 'Resource not found') {
-    return sendError({ res, message, statusCode: 404 });
+  protected notFound(message = 'Resource not found'): never {
+    throw new NotFoundException(message);
   }
 
   /**
-   * HTTP 500 Internal Server Error response.
+   * Throws a generic HTTP exception with the given status code.
    */
-  protected fail(res: Response, message = 'Internal Server Error', error?: any) {
-    return sendError({ res, message, statusCode: 500, error });
+  protected fail(statusCode = 500, message = 'Internal Server Error'): never {
+    throw new HttpException(statusCode, message);
   }
 }

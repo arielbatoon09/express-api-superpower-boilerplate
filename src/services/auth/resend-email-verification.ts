@@ -5,7 +5,7 @@ import { TokenRepository } from '@/repositories/token-repository';
 import { QueueService } from '@/services/redis/queue-service';
 import { renderMailTemplate } from '@/utils/mail-template';
 import { envConfig } from '@/config/env';
-import { logger } from '@/lib/logger';
+import { NotFoundException, BadRequestException } from '@/exceptions';
 
 @injectable()
 export class ResendEmailVerificationService {
@@ -17,48 +17,34 @@ export class ResendEmailVerificationService {
 
   public async execute(data: { email: string }) {
     const { email } = data;
-    try {
-      const user = await this.getUserByEmail(email);
-      this.ensureEmailIsNotVerified(user.emailVerifiedAt);
-      await this.ensureNoActiveToken(user.id);
 
-      // Keep token table thin by garbage collecting unneeded tokens
-      await this.tokenRepository.cleanupInvalidTokensByUser(user.id);
+    const user = await this.getUserByEmail(email);
 
-      // Generate, persist, and enqueue verification email dispatch
-      await this.generateAndSendVerificationEmail(user.id, user.name, user.email);
-
-      return {
-        code: 200,
-        status: 'success',
-        message: 'Verification email resent successfully',
-      };
-    } catch (error: any) {
-      // Intercept and return structured business exception results
-      const isBusinessException = 'code' in error && 'status' in error;
-      if (isBusinessException) {
-        return error;
-      }
-
-      logger.error(`ResendEmailVerificationService failure: ${error.message}`, { error });
-      return { code: 500, status: 'error', message: 'Unable to resend verification email' };
+    // Email already verified — return early with success (not an error)
+    if (user.emailVerifiedAt) {
+      return { message: 'Email already verified' };
     }
+
+    await this.ensureNoActiveToken(user.id);
+
+    // Keep token table thin by garbage collecting unneeded tokens
+    await this.tokenRepository.cleanupInvalidTokensByUser(user.id);
+
+    // Generate, persist, and enqueue verification email dispatch
+    await this.generateAndSendVerificationEmail(user.id, user.name, user.email);
+
+    return {
+      message: 'Verification email resent successfully',
+    };
   }
 
   // Get User By Email
   private async getUserByEmail(email: string) {
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
-      throw { code: 404, status: 'error', message: 'User not found' };
+      throw new NotFoundException('User not found');
     }
     return user;
-  }
-
-  // Ensure Email Is Not Verified Already
-  private ensureEmailIsNotVerified(emailVerifiedAt: Date | null) {
-    if (emailVerifiedAt) {
-      throw { code: 200, status: 'success', message: 'Email already verified' };
-    }
   }
 
   // Ensure No Active Token
@@ -67,7 +53,7 @@ export class ResendEmailVerificationService {
     if (previousToken) {
       const isStillValid = previousToken.expiresAt.getTime() > Date.now();
       if (isStillValid) {
-        throw { code: 400, status: 'error', message: 'Current verification link is still valid' };
+        throw new BadRequestException('Current verification link is still valid');
       }
     }
   }

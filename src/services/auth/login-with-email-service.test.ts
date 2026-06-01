@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { LoginWithEmailService } from '@/services/auth/login-with-email-service';
 import { verifyPassword } from '@/utils/password';
+import { BadRequestException, ForbiddenException } from '@/exceptions';
 
 // Mock password verification
 vi.mock('@/utils/password', () => ({
@@ -60,8 +61,6 @@ describe('LoginWithEmailService Unit Tests', () => {
 
     // Assert
     expect(response).toEqual({
-      code: 200,
-      status: 'success',
       message: 'Login successful',
       data: {
         tokens: {
@@ -90,27 +89,21 @@ describe('LoginWithEmailService Unit Tests', () => {
     });
   });
 
-  it('should reject login if credentials do not match (invalid email or password)', async () => {
+  it('should throw BadRequestException if credentials do not match (invalid email or password)', async () => {
     // Arrange
     const loginData = { email: 'wrong@example.com', password: 'wrongpassword' };
     mockUserRepository.findByEmail.mockResolvedValue(null); // User not found
 
-    // Act
-    const response = await service.execute(loginData);
-
-    // Assert
-    expect(response).toEqual({
-      code: 400,
-      status: 'error',
-      message: 'Invalid Credentials',
-    });
+    // Act & Assert
+    await expect(service.execute(loginData)).rejects.toThrow(BadRequestException);
+    await expect(service.execute(loginData)).rejects.toThrow('Invalid Credentials');
 
     expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('wrong@example.com');
     expect(verifyPassword).not.toHaveBeenCalled();
     expect(mockTokenRepository.createRefreshToken).not.toHaveBeenCalled();
   });
 
-  it('should reject login if password verification fails', async () => {
+  it('should throw BadRequestException if password verification fails', async () => {
     // Arrange
     const loginData = { email: 'test@example.com', password: 'wrongpassword' };
     const mockUser = {
@@ -125,22 +118,12 @@ describe('LoginWithEmailService Unit Tests', () => {
     mockUserRepository.findByEmail.mockResolvedValue(mockUser);
     vi.mocked(verifyPassword).mockResolvedValue(false); // Wrong password
 
-    // Act
-    const response = await service.execute(loginData);
-
-    // Assert
-    expect(response).toEqual({
-      code: 400,
-      status: 'error',
-      message: 'Invalid Credentials',
-    });
-
-    expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('test@example.com');
-    expect(verifyPassword).toHaveBeenCalledWith('wrongpassword', 'hashed-password-123');
-    expect(mockTokenRepository.createRefreshToken).not.toHaveBeenCalled();
+    // Act & Assert
+    await expect(service.execute(loginData)).rejects.toThrow(BadRequestException);
+    await expect(service.execute(loginData)).rejects.toThrow('Invalid Credentials');
   });
 
-  it('should reject login if user email is not verified', async () => {
+  it('should throw ForbiddenException if user email is not verified', async () => {
     // Arrange
     const loginData = { email: 'unverified@example.com', password: 'Password123!' };
     const mockUser = {
@@ -155,34 +138,19 @@ describe('LoginWithEmailService Unit Tests', () => {
     mockUserRepository.findByEmail.mockResolvedValue(mockUser);
     vi.mocked(verifyPassword).mockResolvedValue(true);
 
-    // Act
-    const response = await service.execute(loginData);
+    // Act & Assert
+    await expect(service.execute(loginData)).rejects.toThrow(ForbiddenException);
+    await expect(service.execute(loginData)).rejects.toThrow('Please verify your email first');
 
-    // Assert
-    expect(response).toEqual({
-      code: 403,
-      status: 'error',
-      message: 'Please verify your email first',
-    });
-
-    expect(mockUserRepository.findByEmail).toHaveBeenCalledWith('unverified@example.com');
-    expect(verifyPassword).toHaveBeenCalledWith('Password123!', 'hashed-password-123');
     expect(mockTokenRepository.createRefreshToken).not.toHaveBeenCalled();
   });
 
-  it('should handle unexpected internal errors safely by logging and returning a 500 response', async () => {
+  it('should propagate unexpected internal errors as unhandled exceptions', async () => {
     // Arrange
     const loginData = { email: 'error@example.com', password: 'Password123!' };
     mockUserRepository.findByEmail.mockRejectedValue(new Error('PostgreSQL database crashed'));
 
-    // Act
-    const response = await service.execute(loginData);
-
-    // Assert
-    expect(response).toEqual({
-      code: 500,
-      status: 'error',
-      message: 'Unable to login account',
-    });
+    // Act & Assert
+    await expect(service.execute(loginData)).rejects.toThrow('PostgreSQL database crashed');
   });
 });

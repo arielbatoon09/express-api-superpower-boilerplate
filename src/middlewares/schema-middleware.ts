@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { ZodTypeAny, ZodError } from 'zod';
-import { sendError } from '@/utils/apiResponse';
+import { ValidationException } from '@/exceptions';
 
 export class SchemaMiddleware {
   // Validate Schema
@@ -36,33 +36,23 @@ export class SchemaMiddleware {
 
         return next();
       } catch (error) {
-        return this.handleError(res, error, next);
+        if (error instanceof ZodError) {
+          const errorList = error.issues.map(issue => {
+            const fullPath = issue.path.join('.');
+
+            // Strip the prefix for a cleaner API response (e.g. "email" instead of "body.email")
+            const cleanPath = issue.path.filter(p => p !== 'body' && p !== 'query' && p !== 'params').join('.');
+
+            return {
+              path: cleanPath || fullPath,
+              message: issue.message,
+            };
+          });
+
+          throw new ValidationException('Validation failed', errorList);
+        }
+        return next(error);
       }
     };
-  }
-
-  // Handle Error based on Schema Validation
-  private static handleError(res: Response, error: any, next: NextFunction) {
-    if (error instanceof ZodError) {
-      const errorList = error.issues.map(issue => {
-        const fullPath = issue.path.join('.');
-
-        // Strip the prefix for a cleaner API response (e.g. "email" instead of "body.email")
-        const cleanPath = issue.path.filter(p => p !== 'body' && p !== 'query' && p !== 'params').join('.');
-
-        return {
-          path: cleanPath || fullPath,
-          message: issue.message,
-        };
-      });
-
-      return sendError({
-        res,
-        message: 'Validation failed',
-        statusCode: 400,
-        errors: errorList,
-      });
-    }
-    return next(error);
   }
 }

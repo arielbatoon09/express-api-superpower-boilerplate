@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SignupWithEmailService } from '@/services/auth/signup-with-email-service';
+import { ConflictException } from '@/exceptions';
 
 // Mock password hashing asynchronously to keep unit tests fast and independent
 vi.mock('@/utils/password', () => ({
@@ -53,8 +54,6 @@ describe('SignupWithEmailService Unit Tests', () => {
 
     // Assert
     expect(response).toEqual({
-      code: 200,
-      status: 'success',
       message: 'Created account successfully! Please verify your email.',
       data: {
         user: {
@@ -90,7 +89,7 @@ describe('SignupWithEmailService Unit Tests', () => {
     );
   });
 
-  it('should reject signups if email is already taken with a 409 exception', async () => {
+  it('should reject signups if email is already taken with a ConflictException', async () => {
     // Arrange
     const signupData = {
       name: 'Duplicate User',
@@ -99,15 +98,9 @@ describe('SignupWithEmailService Unit Tests', () => {
     };
     mockUserRepository.findByEmail.mockResolvedValue({ id: 'existing-user-id' }); // Email is taken
 
-    // Act
-    const response = await service.execute(signupData);
-
-    // Assert
-    expect(response).toEqual({
-      code: 409,
-      status: 'error',
-      message: 'Email already registered',
-    });
+    // Act & Assert
+    await expect(service.execute(signupData)).rejects.toThrow(ConflictException);
+    await expect(service.execute(signupData)).rejects.toThrow('Email already registered');
 
     // Assert that no records were created and no emails were enqueued
     expect(mockUserRepository.create).not.toHaveBeenCalled();
@@ -115,19 +108,12 @@ describe('SignupWithEmailService Unit Tests', () => {
     expect(mockQueueService.addJob).not.toHaveBeenCalled();
   });
 
-  it('should handle unexpected internal errors safely by logging and returning a 500 response', async () => {
+  it('should propagate unexpected internal errors as unhandled exceptions', async () => {
     // Arrange
     const signupData = { name: 'Error User', email: 'error@example.com', password: 'Password123!' };
     mockUserRepository.findByEmail.mockRejectedValue(new Error('PostgreSQL connection timeout'));
 
-    // Act
-    const response = await service.execute(signupData);
-
-    // Assert
-    expect(response).toEqual({
-      code: 500,
-      status: 'error',
-      message: 'Unable to create account',
-    });
+    // Act & Assert — unexpected errors now propagate (caught by global error handler at runtime)
+    await expect(service.execute(signupData)).rejects.toThrow('PostgreSQL connection timeout');
   });
 });

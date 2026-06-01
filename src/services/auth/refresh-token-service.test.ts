@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RefreshTokenService } from '@/services/auth/refresh-token-service';
+import { BadRequestException, UnauthorizedException, NotFoundException } from '@/exceptions';
 
 vi.mock('@/lib/jwt', () => ({
   verifyRefreshToken: vi.fn().mockImplementation(token => {
@@ -37,68 +38,44 @@ describe('RefreshTokenService Unit Tests', () => {
     service = new RefreshTokenService(mockUserRepository, mockTokenRepository);
   });
 
-  it('should return error 400 if refresh token is not provided', async () => {
-    const response = await service.execute({ refreshToken: undefined });
-
-    expect(response).toEqual({
-      code: 400,
-      status: 'error',
-      message: 'Refresh token is required',
-    });
+  it('should throw BadRequestException if refresh token is not provided', async () => {
+    await expect(service.execute({ refreshToken: undefined })).rejects.toThrow(BadRequestException);
+    await expect(service.execute({ refreshToken: undefined })).rejects.toThrow('Refresh token is required');
   });
 
-  it('should return error 401 if refresh token signature is invalid', async () => {
-    const response = await service.execute({ refreshToken: 'invalid-token' });
-
-    expect(response).toEqual({
-      code: 401,
-      status: 'error',
-      message: 'Invalid or expired refresh token',
-    });
+  it('should throw UnauthorizedException if refresh token signature is invalid', async () => {
+    await expect(service.execute({ refreshToken: 'invalid-token' })).rejects.toThrow(UnauthorizedException);
+    await expect(service.execute({ refreshToken: 'invalid-token' })).rejects.toThrow('Invalid or expired refresh token');
   });
 
-  it('should return error 401 if refresh token is revoked or consumed in db', async () => {
+  it('should throw UnauthorizedException if refresh token is revoked or consumed in db', async () => {
     mockTokenRepository.findActiveRefreshToken.mockResolvedValue(null);
 
-    const response = await service.execute({ refreshToken: 'valid-token' });
-
-    expect(response).toEqual({
-      code: 401,
-      status: 'error',
-      message: 'Refresh token has been revoked or consumed',
-    });
+    await expect(service.execute({ refreshToken: 'valid-token' })).rejects.toThrow(UnauthorizedException);
+    await expect(service.execute({ refreshToken: 'valid-token' })).rejects.toThrow('Refresh token has been revoked or consumed');
   });
 
-  it('should return error 401 and revoke token if it is expired in database', async () => {
+  it('should throw UnauthorizedException and revoke token if it is expired in database', async () => {
     mockTokenRepository.findActiveRefreshToken.mockResolvedValue({
       id: 'token-uuid',
       expiresAt: new Date(Date.now() - 5000), // expired
     });
 
-    const response = await service.execute({ refreshToken: 'expired-token' });
+    await expect(service.execute({ refreshToken: 'expired-token' })).rejects.toThrow(UnauthorizedException);
+    await expect(service.execute({ refreshToken: 'expired-token' })).rejects.toThrow('Refresh token has expired');
 
-    expect(response).toEqual({
-      code: 401,
-      status: 'error',
-      message: 'Refresh token has expired',
-    });
     expect(mockTokenRepository.revokeToken).toHaveBeenCalledWith('token-uuid');
   });
 
-  it('should return error 404 if user no longer exists', async () => {
+  it('should throw NotFoundException if user no longer exists', async () => {
     mockTokenRepository.findActiveRefreshToken.mockResolvedValue({
       id: 'token-uuid',
       expiresAt: new Date(Date.now() + 10 * 60 * 1000), // valid
     });
     mockUserRepository.findById.mockResolvedValue(null);
 
-    const response = await service.execute({ refreshToken: 'valid-token' });
-
-    expect(response).toEqual({
-      code: 404,
-      status: 'error',
-      message: 'User not found',
-    });
+    await expect(service.execute({ refreshToken: 'valid-token' })).rejects.toThrow(NotFoundException);
+    await expect(service.execute({ refreshToken: 'valid-token' })).rejects.toThrow('User not found');
   });
 
   it('should rotate tokens and return new pairs successfully', async () => {
@@ -114,8 +91,6 @@ describe('RefreshTokenService Unit Tests', () => {
     const response = await service.execute({ refreshToken: 'valid-token' });
 
     expect(response).toEqual({
-      code: 200,
-      status: 'success',
       message: 'Tokens refreshed successfully',
       data: {
         tokens: {
@@ -138,15 +113,9 @@ describe('RefreshTokenService Unit Tests', () => {
     expect(mockTokenRepository.cleanupInvalidTokensByUser).toHaveBeenCalledWith('user-uuid');
   });
 
-  it('should return error 500 if database fails unexpectedly', async () => {
+  it('should propagate unexpected internal errors as unhandled exceptions', async () => {
     mockTokenRepository.findActiveRefreshToken.mockRejectedValue(new Error('PostgreSQL server crashed'));
 
-    const response = await service.execute({ refreshToken: 'valid-token' });
-
-    expect(response).toEqual({
-      code: 500,
-      status: 'error',
-      message: 'Unable to refresh token',
-    });
+    await expect(service.execute({ refreshToken: 'valid-token' })).rejects.toThrow('PostgreSQL server crashed');
   });
 });

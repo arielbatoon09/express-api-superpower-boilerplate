@@ -5,7 +5,7 @@ import { TokenRepository } from '@/repositories/token-repository';
 import { QueueService } from '@/services/redis/queue-service';
 import { renderMailTemplate } from '@/utils/mail-template';
 import { envConfig } from '@/config/env';
-import { logger } from '@/lib/logger';
+import { BadRequestException } from '@/exceptions';
 
 @injectable()
 export class ForgotPasswordService {
@@ -17,40 +17,27 @@ export class ForgotPasswordService {
 
   public async execute(data: { email: string }) {
     const { email } = data;
-    try {
-      const user = await this.userRepository.findByEmail(email);
 
-      // Not found user still show success to avoid email harvesting
-      if (!user) {
-        return {
-          code: 200,
-          status: 'success',
-          message: 'If that email is registered, we have sent a reset password link.',
-        };
-      }
+    const user = await this.userRepository.findByEmail(email);
 
-      await this.ensureNoActiveToken(user.id);
-
-      // Clean up any stale reset tokens first
-      await this.tokenRepository.cleanupInvalidTokensByUser(user.id);
-
-      // Generate secure 15-minute token
-      await this.generateAndSendResetEmail(user.id, user.name, user.email);
-
+    // Not found user still show success to avoid email harvesting
+    if (!user) {
       return {
-        code: 200,
-        status: 'success',
         message: 'If that email is registered, we have sent a reset password link.',
       };
-    } catch (error: any) {
-      const isBusinessException = 'code' in error && 'status' in error;
-      if (isBusinessException) {
-        return error;
-      }
-
-      logger.error(`ForgotPasswordService failure: ${error.message}`, { error });
-      return { code: 500, status: 'error', message: 'Unable to process forgot password request' };
     }
+
+    await this.ensureNoActiveToken(user.id);
+
+    // Clean up any stale reset tokens first
+    await this.tokenRepository.cleanupInvalidTokensByUser(user.id);
+
+    // Generate secure 15-minute token
+    await this.generateAndSendResetEmail(user.id, user.name, user.email);
+
+    return {
+      message: 'If that email is registered, we have sent a reset password link.',
+    };
   }
 
   // Ensure No Active Token
@@ -59,7 +46,7 @@ export class ForgotPasswordService {
     if (previousToken) {
       const isStillValid = previousToken.expiresAt.getTime() > Date.now();
       if (isStillValid) {
-        throw { code: 400, status: 'error', message: 'Current password reset link is still valid' };
+        throw new BadRequestException('Current password reset link is still valid');
       }
     }
   }

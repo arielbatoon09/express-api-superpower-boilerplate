@@ -49,7 +49,7 @@ export class SocketService {
     // Initialize Namespaces & apply authentication
     this.registerNamespaces();
 
-    logger.info('🔌 WebSocket server successfully initialized and attached to HTTP Server.');
+    logger.info('WebSocket server successfully initialized and attached to HTTP Server.');
   }
 
   /**
