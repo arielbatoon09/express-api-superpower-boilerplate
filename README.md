@@ -14,8 +14,13 @@ Code is structured inside four distinct, unidirectional layers:
 
 - **Routes (Composition Root)**: The entry point where URLs are mapped to controller methods, and where Zod request validations are applied as middleware.
 - **Controllers (Presentation Layer)**: Thin classes responsible _only_ for resolving request query/param/body parameters, invoking the correct service orchestrator, and returning standardized API responses.
-- **Services (Business Logic Layer)**: The core "brains" of the application. Business workflows are designed as class-based orchestrators. The public interface accepts inputs, while individual logical steps are encapsulated in private helper methods.
+- **Services (Business Logic Layer)**: The core "brains" of the application. Business workflows are designed as class-based orchestrators. The public interface accepts inputs, while logical steps are encapsulated in private helper methods. Services throw typed exception classes instead of returning error maps.
 - **Repositories (Data Access Layer)**: A layer wrapping database models (Prisma) to decouple business services from database-specific query structures.
+
+### Standardized Exception Hierarchy
+
+Error execution flows rely on a structured, class-based exception tree located under `src/exceptions`. By inheriting from a central `HttpException` class, exceptions capture concrete call stacks and carry structured payload validation metadata. The global error handler automatically catches thrown exceptions, logging debug stacks in non-production environments and responding with standardized API formats.
+
 
 ### SOLID Principles Enforced
 
@@ -120,14 +125,24 @@ Equipped with `csrf-csrf` middleware enforcing the industry-standard Double Subm
 - **Helmet Headers**: Automatically configures 15+ secure HTTP headers (including Content-Security-Policy fallbacks, Strict-Transport-Security, X-Frame-Options, and X-Content-Type-Options) to protect clients from modern web exploits.
 - **HPP Protection**: Intercepts and mitigates parameter pollution attacks by sanitizing duplicate key-value pairs inside request queries and bodies.
 
+### 4. Sliding-Window Rate Limiting
+
+- **Atomic sliding window**: Uses Redis sorted sets (ZSET) inside multi-pipeline transactions to prevent boundary bursts.
+- **Auth-Aware Resolution**: Automatically locks limits down on specific users by validating authentication bearer tokens or active route sessions (`req.user.sub`), falling back to client IP (`req.ip`) for anonymous traffic.
+- **Fail-Open Resilience**: If Redis suffers connection loss, the middleware logs warnings but allows API requests to proceed (fail-open) rather than triggering system crashes.
+- **Reverse Proxy Trust**: Explicitly configured to support reverse proxy IP headers (`trust proxy` activated).
+- **Custom headers**: Sets standard rate limit response details (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`) and standard `Retry-After` on `429 Too Many Requests` states.
+
+
 ---
 
 ## 📂 Project Directory Structure
 
 - `src/config/`: System configuration schemas and environment variable validations.
 - `src/controllers/`: Express request handlers, extending `BaseController` for dynamic context auto-binding.
+- `src/exceptions/`: Centralized HTTP exception classes for robust, standardized error states.
 - `src/lib/`: Database connectors, logging routines, and the central DI container registry.
-- `src/middlewares/`: Express filter middlewares (Authentication, RBAC, Validation).
+- `src/middlewares/`: Express filter middlewares (Authentication, RBAC, Validation, Rate Limiting).
 - `src/repositories/`: Database query abstraction files.
 - `src/routes/`: Route mappings and URL composition roots.
 - `src/schemas/`: Declarative Zod validation rules.
