@@ -5,8 +5,7 @@ databases/
 cli/
 .sst/
 
-*-lock.json
-*.lock
+# Include lockfiles for building the image
 
 .env
 .env.*

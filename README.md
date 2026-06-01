@@ -4,6 +4,59 @@ A production-grade, enterprise-ready Express boilerplate engineered with **TypeS
 
 ---
 
+## 🚀 Getting Started (Local Development)
+
+Follow these steps to set up and run the application locally on your machine.
+
+### Prerequisites
+* **Node.js**: `v22.x` (Recommended to use [nvm](https://github.com/nvm-sh/nvm))
+* **Docker & Docker Compose**: For containerized databases and services.
+
+### 1. Clone & Install Dependencies
+Clone the repository and install the NPM packages:
+```bash
+npm install
+```
+
+### 2. Environment Setup
+Copy the example environment file to create your local `.env`:
+```bash
+cp .env.example .env
+```
+*(Specify any needed API keys and ports inside the newly created `.env` file).*
+
+### 3. Spin up Databases & Cache (Docker)
+We use Docker to run the database (PostgreSQL) and the key-value cache (Redis) locally. Start these services with:
+```bash
+docker compose up -d pg redis
+```
+This will start:
+* **PostgreSQL** on port `5433` (mapped from 5432 to prevent local conflicts)
+* **Redis** on port `6379`
+
+### 4. Database Setup & Migrations
+Generate the Prisma Client and run the migrations to create the database schemas:
+```bash
+npm run db:generate
+npm run db:migrate
+```
+
+### 5. Start the Application
+Run the backend server locally with hot-reloading (Strategy A):
+```bash
+npm run dev
+```
+The server will start on [http://localhost:8000](http://localhost:8000).
+
+### 6. Verify and Explore
+* **API Interactive Docs**: Open [http://localhost:8000/docs](http://localhost:8000/docs) in your browser to view the OpenAPI Swagger interactive dashboard.
+* **Stop Docker Services**: When you are done developing, you can stop the background containers using:
+  ```bash
+  docker compose down
+  ```
+
+---
+
 ## 🏛️ Architectural Principles
 
 This boilerplate enforces strict software engineering standards to guarantee developer velocity, code clarity, and testability as the project scales.

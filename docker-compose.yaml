@@ -1,13 +1,92 @@
-name: express-api-boilerplate
+name: ${COMPOSE_PROJECT_NAME:-express-api-boilerplate}
 
 services:
+  # Relational Database (PostgreSQL)
+  pg:
+    image: postgres:15-alpine
+    restart: always
+    ports:
+      - '${DB_PORT:-5432}:5432'
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-express_db}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+        reservations:
+          memory: 256M
+
+  # Redis Cache & Queue
+  redis:
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          memory: 128M
+
+  # Application Web Service
   app:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: always
     ports:
-      - '${APP_PORT}:8000'
+      - '${PORT:-8000}:8000'
     environment:
-      - STAGE=${STAGE}
-      - DB_URL=${DB_URL}
-      - TEST_DB_URL=${TEST_DB_URL}
+      - NODE_ENV=${NODE_ENV:-production}
+      - STAGE=${STAGE:-dev}
+      - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-password}@pg:5432/${DB_NAME:-express_db}?schema=public
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET}
+      - APP_NAME=${APP_NAME:-Express API Boilerplate}
+      - BACKEND_URL=${BACKEND_URL:-http://localhost:8000}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS}
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - SMTP_FROM=${SMTP_FROM}
+    depends_on:
+      pg:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+        reservations:
+          memory: 256M
+
+
+volumes:
+  pg-data:
+    name: ${COMPOSE_PROJECT_NAME:-express-api-boilerplate}-pg-data
+  redis-data:
+    name: ${COMPOSE_PROJECT_NAME:-express-api-boilerplate}-redis-data
