@@ -1,0 +1,16 @@
+services:
+  # Application Web Service (Development Override)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    command: npx nodemon -L --watch src -e ts --exec tsx src/server.ts
+    ports:
+      - '${PORT:-8000}:8000'
+    volumes:
+      - .:/builder
+      - /builder/node_modules
+    environment:
+      - NODE_ENV=development
+      - STAGE=dev

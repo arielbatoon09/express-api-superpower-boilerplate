@@ -1,8 +1,8 @@
 # Stage 1: Base stage with Node.js Alpine image
 FROM node:22-alpine AS base
 
-# Stage 2: Builder stage starts from the base image
-FROM base AS builder
+# Stage 2: Development stage starts from the base image
+FROM base AS development
 
 # Install libc6-compat for compatibility and globally install specific npm version
 RUN apk add --no-cache libc6-compat && \
@@ -23,11 +23,14 @@ COPY . .
 # Generate Prisma Client
 RUN npm run db:generate
 
+# Stage 3: Builder stage builds the app and prunes devDependencies
+FROM development AS builder
+
 # Build the application and prune development dependencies
 RUN npm run build
 RUN npm prune --prod
 
-# Stage 3: Runner stage starts from the base image again
+# Stage 4: Runner stage starts from the base image again
 FROM base AS runner
 
 # Set the working directory in the container

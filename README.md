@@ -6,66 +6,86 @@ A production-grade, enterprise-ready Express boilerplate engineered with **TypeS
 
 ## 🚀 Getting Started (Local Development)
 
-Follow these steps to set up and run the application locally on your machine.
+This boilerplate supports a fully containerized local development environment with auto-rebuilding and hot-reloading, as well as a traditional local Node.js setup.
 
 ### Prerequisites
-* **Node.js**: `v22.x` (Recommended to use [nvm](https://github.com/nvm-sh/nvm))
 * **Docker & Docker Compose**:
-  * **Windows / macOS**: Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
-    * *Windows users*: It is highly recommended to use the **WSL 2 (Windows Subsystem for Linux) backend** for optimal performance. If you don't have WSL installed yet, open PowerShell as Administrator and run:
-      ```powershell
-      wsl --install
-      ```
-  * **Linux**: Follow the official guide to install [Docker Engine](https://docs.docker.com/engine/install/) and the [Docker Compose plugin](https://docs.docker.com/compose/install/linux/).
+  * **Windows / macOS**: Install [Docker Desktop](https://www.docker.com/products/docker-desktop/). (Ensure WSL 2 is configured for Windows).
+  * **Linux**: Install [Docker Engine](https://docs.docker.com/engine/install/) and the [Docker Compose plugin](https://docs.docker.com/compose/install/linux/).
+* **Node.js** *(Optional - only required if running outside Docker)*: `v22.x`
 
-### 1. Clone & Install Dependencies
-Clone the repository and install the NPM packages:
+---
+
+### Strategy A: Running with Docker (Recommended & Docker-First)
+
+The entire application stack (API server, Postgres database, Redis cache, and background workers) runs inside Docker with automatic hot-reloading.
+
+#### 1. Setup Environment Configuration
+Copy the sample environment file:
+```bash
+cp .env.example .env
+```
+Ensure that the `COMPOSE_FILE` is configured for development inside your `.env`:
+```env
+COMPOSE_FILE=docker-compose.yaml:docker-compose.dev.yml
+COMPOSE_PATH_SEPARATOR=:
+```
+
+#### 2. Start the Stack
+Spin up the entire development stack in the background:
+```bash
+docker compose up -d --build
+```
+This single command handles everything:
+* Spins up **PostgreSQL** on port `5433` (externally) and **Redis** on port `6379`.
+* Automatically installs NPM dependencies, generates the Prisma client inside the container, and boots the Express API server on [http://localhost:8000](http://localhost:8000).
+* Mounts your local project folder. Any edits to your local files will instantly trigger hot-reloading via `nodemon` polling inside the container.
+
+#### 3. View Logs & Verify
+Monitor the live container output (useful to watch the hot reloader):
+```bash
+docker compose logs -f app
+```
+* Open [http://localhost:8000/api/health](http://localhost:8000/api/health) to confirm the app is online.
+* Open [http://localhost:8000/api/docs](http://localhost:8000/api/docs) to access interactive Swagger documentation.
+
+#### 4. Stop the Environment
+```bash
+docker compose down
+```
+
+---
+
+### Strategy B: Running on Host Machine (Without Docker for App)
+
+If you prefer to run the Node.js application process directly on your host machine while running database services in Docker.
+
+#### 1. Clone & Install Dependencies
 ```bash
 npm install
 ```
 
-### 2. Environment Setup
-Copy the example environment file to create your local `.env`:
+#### 2. Setup Environment Configuration
+Copy the `.env` file:
 ```bash
 cp .env.example .env
 ```
-*(Specify any needed API keys and ports inside the newly created `.env` file).*
+*(Disable the docker-compose development files overrides in `.env` by setting `COMPOSE_FILE=docker-compose.yaml` or leaving it blank so that docker compose only starts DB services).*
 
-### 3. Spin up Databases & Cache (Docker)
-We use Docker to run the database (PostgreSQL) and the key-value cache (Redis) locally. Start these services with:
+#### 3. Spin up Databases & Cache (Docker)
 ```bash
 docker compose up -d pg redis
 ```
-This will start:
-* **PostgreSQL** on port `5433` (mapped from 5432 to prevent local conflicts)
-  * **Connecting with [DBeaver](https://dbeaver.io/download/)** (or other GUI clients):
-    * **Host**: `localhost`
-    * **Port**: `5433`
-    * **Database**: `express_db` (default)
-    * **Username**: `postgres` (default)
-    * **Password**: `password` (default)
-* **Redis** on port `6379`
 
-### 4. Database Setup & Migrations
-Generate the Prisma Client and run the migrations to create the database schemas:
+#### 4. Run Migrations & Start App
 ```bash
 npm run db:generate
 npm run db:migrate
-```
-
-### 5. Start the Application
-Run the backend server locally with hot-reloading (Strategy A):
-```bash
 npm run dev
 ```
-The server will start on [http://localhost:8000](http://localhost:8000).
+The server will start on [http://localhost:8000](http://localhost:8000) with local hot-reloading.
 
-### 6. Verify and Explore
-* **API Interactive Docs**: Open [http://localhost:8000/api/docs](http://localhost:8000/api/docs) in your browser to view the OpenAPI Swagger interactive dashboard.
-* **Stop Docker Services**: When you are done developing, you can stop the background containers using:
-  ```bash
-  docker compose down
-  ```
+---
 
 ---
 

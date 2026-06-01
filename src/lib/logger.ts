@@ -4,6 +4,7 @@ import expressWinston from 'express-winston';
 import { envConfig } from '@/config/env';
 import { STAGES } from '@/constants/env';
 import chalk from 'chalk';
+import path from 'path';
 
 const { combine, timestamp, json, colorize, printf, errors, uncolorize } = winston.format;
 
@@ -18,16 +19,20 @@ const transports: winston.transport[] = [
     level: envConfig.STAGE === STAGES.Prod ? 'info' : 'debug',
     format:
       envConfig.STAGE === STAGES.Prod
-        ? combine(timestamp(), errors({ stack: true }), json())
-        : combine(timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), colorize(), errors({ stack: true }), devFormat),
+          ? combine(timestamp(), errors({ stack: true }), json())
+          : combine(timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), colorize(), errors({ stack: true }), devFormat),
   }),
 ];
+
+const logDir = path.resolve('logs');
 
 // 2. Production & Development file rotation logging
 if (envConfig.STAGE === STAGES.Prod || process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'development') {
   transports.push(
     new DailyRotateFile({
-      filename: 'logs/error-%DATE%.log',
+      dirname: logDir,
+      filename: 'error-%DATE%.log',
+      auditFile: path.join(logDir, '.error-audit.json'),
       datePattern: 'YYYY-MM-DD',
       zippedArchive: true,
       maxSize: '20m',
@@ -36,7 +41,9 @@ if (envConfig.STAGE === STAGES.Prod || process.env.NODE_ENV === 'production' || 
       format: combine(uncolorize(), timestamp(), errors({ stack: true }), json()),
     }),
     new DailyRotateFile({
-      filename: 'logs/combined-%DATE%.log',
+      dirname: logDir,
+      filename: 'combined-%DATE%.log',
+      auditFile: path.join(logDir, '.combined-audit.json'),
       datePattern: 'YYYY-MM-DD',
       zippedArchive: true,
       maxSize: '20m',
