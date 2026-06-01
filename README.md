@@ -38,6 +38,12 @@ docker compose up -d pg redis
 ```
 This will start:
 * **PostgreSQL** on port `5433` (mapped from 5432 to prevent local conflicts)
+  * **Connecting with [DBeaver](https://dbeaver.io/download/)** (or other GUI clients):
+    * **Host**: `localhost`
+    * **Port**: `5433`
+    * **Database**: `express_db` (default)
+    * **Username**: `postgres` (default)
+    * **Password**: `password` (default)
 * **Redis** on port `6379`
 
 ### 4. Database Setup & Migrations
