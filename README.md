@@ -56,9 +56,9 @@ docker compose down
 
 ---
 
-### Strategy B: Running on Host Machine (Without Docker for App)
+### Strategy B: Running on Host Machine (Without Docker)
 
-If you prefer to run the Node.js application process directly on your host machine while running database services in Docker.
+If you prefer to run the Node.js application process directly on your host machine.
 
 #### 1. Clone & Install Dependencies
 ```bash
@@ -70,9 +70,15 @@ Copy the `.env` file:
 ```bash
 cp .env.example .env
 ```
-*(Disable the docker-compose development files overrides in `.env` by setting `COMPOSE_FILE=docker-compose.yaml` or leaving it blank so that docker compose only starts DB services).*
+Update your `DATABASE_URL` and `REDIS_URL` in `.env` to point to your local or cloud Postgres and Redis instances:
+```env
+DATABASE_URL="postgresql://<username>:<password>@<host>:<port>/<dbname>"
+REDIS_URL="redis://<host>:<port>"
+```
+*(If you are not using Docker at all, you can also safely remove or comment out `COMPOSE_FILE` and other `COMPOSE_*` variables in `.env`).*
 
-#### 3. Spin up Databases & Cache (Docker)
+#### 3. Spin up Databases & Cache (Optional - if using Docker for services)
+If you do not have native database/cache services installed on your machine and want to run *just* PostgreSQL and Redis in Docker:
 ```bash
 docker compose up -d pg redis
 ```
