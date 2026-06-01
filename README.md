@@ -61,7 +61,7 @@ npm run dev
 The server will start on [http://localhost:8000](http://localhost:8000).
 
 ### 6. Verify and Explore
-* **API Interactive Docs**: Open [http://localhost:8000/docs](http://localhost:8000/docs) in your browser to view the OpenAPI Swagger interactive dashboard.
+* **API Interactive Docs**: Open [http://localhost:8000/api/docs](http://localhost:8000/api/docs) in your browser to view the OpenAPI Swagger interactive dashboard.
 * **Stop Docker Services**: When you are done developing, you can stop the background containers using:
   ```bash
   docker compose down
