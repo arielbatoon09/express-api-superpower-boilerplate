@@ -10,7 +10,13 @@ Follow these steps to set up and run the application locally on your machine.
 
 ### Prerequisites
 * **Node.js**: `v22.x` (Recommended to use [nvm](https://github.com/nvm-sh/nvm))
-* **Docker & Docker Compose**: For containerized databases and services.
+* **Docker & Docker Compose**:
+  * **Windows / macOS**: Download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
+    * *Windows users*: It is highly recommended to use the **WSL 2 (Windows Subsystem for Linux) backend** for optimal performance. If you don't have WSL installed yet, open PowerShell as Administrator and run:
+      ```powershell
+      wsl --install
+      ```
+  * **Linux**: Follow the official guide to install [Docker Engine](https://docs.docker.com/engine/install/) and the [Docker Compose plugin](https://docs.docker.com/compose/install/linux/).
 
 ### 1. Clone & Install Dependencies
 Clone the repository and install the NPM packages:
