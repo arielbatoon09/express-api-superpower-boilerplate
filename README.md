@@ -201,6 +201,31 @@ Equipped with `csrf-csrf` middleware enforcing the industry-standard Double Subm
 
 ---
 
+## 🛠️ CLI Scaffolding Tool
+
+This boilerplate includes an artisan-like CLI tool to quickly generate individual components or scaffold a complete CRUD resource.
+
+Run the generator interactively:
+```bash
+npm run breeze
+```
+
+Or pass command-line arguments to bypass interactive prompts:
+```bash
+# Scaffold a full CRUD resource (Creates Repository, Services, Controller, Schema, and Route files)
+npm run breeze resource Product
+
+# Generate a specific component
+npm run breeze controller Product
+npm run breeze service CreateProduct
+npm run breeze repository Product
+npm run breeze schema Product
+npm run breeze route Product
+```
+
+
+---
+
 ## 📂 Project Directory Structure
 
 - `src/config/`: System configuration schemas and environment variable validations.
