@@ -20,11 +20,22 @@ import {
   logoutSchema,
   LogoutSuccessResponseSchema,
 } from '@/schemas/auth';
-import { AuthMiddleware } from '@/middlewares';
+import { AuthMiddleware, RateLimitMiddleware } from '@/middlewares';
 import { OpenApiRouter } from '@/lib/openapi-router';
 
 const openApiRouter = new OpenApiRouter('/api/auth');
 const authController = container.resolve(AuthController);
+
+// Route-specific rate limit definitions (Enterprise-level tuning)
+const signupLimiter = RateLimitMiddleware.create({ max: 5, windowMs: 60000, keyPrefix: 'ratelimit:signup' });
+const verifyEmailLimiter = RateLimitMiddleware.create({ max: 10, windowMs: 60000, keyPrefix: 'ratelimit:verify-email' });
+const loginLimiter = RateLimitMiddleware.create({ max: 5, windowMs: 60000, keyPrefix: 'ratelimit:login' });
+const resendEmailLimiter = RateLimitMiddleware.create({ max: 3, windowMs: 60000, keyPrefix: 'ratelimit:resend-email' });
+const forgotPasswordLimiter = RateLimitMiddleware.create({ max: 3, windowMs: 60000, keyPrefix: 'ratelimit:forgot-password' });
+const resetPasswordLimiter = RateLimitMiddleware.create({ max: 5, windowMs: 60000, keyPrefix: 'ratelimit:reset-password' });
+const changePasswordLimiter = RateLimitMiddleware.create({ max: 5, windowMs: 60000, keyPrefix: 'ratelimit:change-password' });
+const refreshTokenLimiter = RateLimitMiddleware.create({ max: 15, windowMs: 60000, keyPrefix: 'ratelimit:refresh-token' });
+const logoutLimiter = RateLimitMiddleware.create({ max: 10, windowMs: 60000, keyPrefix: 'ratelimit:logout' });
 
 // Sign Up with Email
 openApiRouter.post({
@@ -35,6 +46,7 @@ openApiRouter.post({
   request: signupWithEmailSchema,
   response: SignupSuccessResponseSchema,
   errors: [400, 409, 500],
+  middlewares: [signupLimiter],
   handler: authController.signupWithEmail,
 });
 
@@ -47,6 +59,7 @@ openApiRouter.get({
   request: verifyEmailSchema,
   response: VerifyEmailSuccessResponseSchema,
   errors: [400, 401, 500],
+  middlewares: [verifyEmailLimiter],
   handler: authController.verifyEmail,
 });
 
@@ -59,6 +72,7 @@ openApiRouter.post({
   request: loginWithEmailSchema,
   response: LoginSuccessResponseSchema,
   errors: [400, 401, 500],
+  middlewares: [loginLimiter],
   handler: authController.loginWithEmail,
 });
 
@@ -71,6 +85,7 @@ openApiRouter.post({
   request: resendEmailVerificationSchema,
   response: ResendVerificationSuccessResponseSchema,
   errors: [400, 401, 500],
+  middlewares: [resendEmailLimiter],
   handler: authController.resendEmailVerification,
 });
 
@@ -83,6 +98,7 @@ openApiRouter.post({
   request: forgotPasswordSchema,
   response: ForgotPasswordSuccessResponseSchema,
   errors: [400, 500],
+  middlewares: [forgotPasswordLimiter],
   handler: authController.forgotPassword,
 });
 
@@ -95,6 +111,7 @@ openApiRouter.post({
   request: resetPasswordSchema,
   response: ResetPasswordSuccessResponseSchema,
   errors: [400, 404, 410, 500],
+  middlewares: [resetPasswordLimiter],
   handler: authController.resetPassword,
 });
 
@@ -107,7 +124,7 @@ openApiRouter.post({
   request: changePasswordSchema,
   response: ChangePasswordSuccessResponseSchema,
   errors: [400, 401, 500],
-  middlewares: [AuthMiddleware.execute],
+  middlewares: [AuthMiddleware.execute, changePasswordLimiter],
   handler: authController.changePassword,
 });
 
@@ -120,6 +137,7 @@ openApiRouter.post({
   request: refreshTokenSchema,
   response: RefreshTokenSuccessResponseSchema,
   errors: [400, 401, 404, 500],
+  middlewares: [refreshTokenLimiter],
   handler: authController.refreshToken,
 });
 
@@ -132,6 +150,7 @@ openApiRouter.post({
   request: logoutSchema,
   response: LogoutSuccessResponseSchema,
   errors: [500],
+  middlewares: [logoutLimiter],
   handler: authController.logout,
 });
 

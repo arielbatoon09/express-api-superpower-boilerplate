@@ -10,3 +10,4 @@ export { NotFoundException } from '@/exceptions/not-found.exception';
 export { ConflictException } from '@/exceptions/conflict.exception';
 export { GoneException } from '@/exceptions/gone.exception';
 export { ValidationException } from '@/exceptions/validation.exception';
+export { TooManyRequestsException } from '@/exceptions/too-many-requests.exception';

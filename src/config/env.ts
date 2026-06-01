@@ -24,6 +24,8 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASSWORD: z.string().optional(),
   SMTP_FROM: z.string().optional(),
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
+  RATE_LIMIT_MAX: z.coerce.number().default(100),
 });
 
 const parseEnvironment = () => {
@@ -43,6 +45,8 @@ const parseEnvironment = () => {
       SMTP_USER: process.env.SMTP_USER,
       SMTP_PASSWORD: process.env.SMTP_PASSWORD,
       SMTP_FROM: process.env.SMTP_FROM,
+      RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
+      RATE_LIMIT_MAX: process.env.RATE_LIMIT_MAX,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

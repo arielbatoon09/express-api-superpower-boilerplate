@@ -11,13 +11,20 @@ import apiRouter from '@/routes';
 import { swaggerUi, generateOpenApiDocument } from '@/lib/openapi';
 import { doubleCsrfProtection } from '@/middlewares/csrf-middleware';
 import { HttpException } from '@/exceptions';
+import { RateLimitMiddleware } from '@/middlewares';
 
 const app = express();
+
+// Enable reverse proxy trust to get accurate client IP address
+app.set('trust proxy', true);
 
 // --- Core Middleware ---
 app.use(helmet());
 app.use(requestLogger);
 app.use(cors({ origin: envConfig.FRONTEND_URL, credentials: true }));
+
+// --- Global Rate Limiting ---
+app.use(RateLimitMiddleware.create());
 
 // --- Parse incoming requests ---
 app.use(express.json());
@@ -28,6 +35,7 @@ app.use(cookieParser());
 // --- CSRF Protection ---
 app.use(doubleCsrfProtection);
 
+
 // --- API Routing ---
 app.use('/api', apiRouter);
 
@@ -35,7 +43,7 @@ app.use('/api', apiRouter);
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(generateOpenApiDocument()));
 
 // --- Redirect Root to API Docs ---
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
   res.redirect('/api/docs');
 });
 
@@ -52,7 +60,7 @@ app.use((req: Request, res: Response) => {
 app.use(errorLogger);
 
 // --- Global Error Handler ---
-app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   // Catch CSRF validation errors from csrf-csrf
   if ('code' in err && (err as any).code === 'EBADCSRFTOKEN') {
     return sendError({

@@ -3,12 +3,16 @@ import { OpenApiRouter } from '@/lib/openapi-router';
 import { generateCsrfToken } from '@/middlewares/csrf-middleware';
 import { sendSuccess } from '@/utils/apiResponse';
 import { envConfig } from '@/config/env';
+import { RateLimitMiddleware } from '@/middlewares';
 
 // System routes mounted under /api
 const openApiRouter = new OpenApiRouter('/api');
 
+const systemLimiter = RateLimitMiddleware.create({ max: 30, windowMs: 60000, keyPrefix: 'ratelimit:system' });
+
 // Retrieve CSRF Token
 openApiRouter.get({
+
   path: '/csrf-token',
   summary: 'Retrieve CSRF Token',
   description: 'Generates and returns a secure CSRF token for the frontend to include in the x-csrf-token header for state-mutating requests.',
@@ -20,6 +24,7 @@ openApiRouter.get({
       csrfToken: z.string(),
     }),
   }),
+  middlewares: [systemLimiter],
   handler: (req, res) => {
     const csrfToken = generateCsrfToken(req, res);
     sendSuccess({
@@ -44,6 +49,7 @@ openApiRouter.get({
       environment: z.string(),
     }),
   }),
+  middlewares: [systemLimiter],
   handler: (req, res) => {
     sendSuccess({
       res,
